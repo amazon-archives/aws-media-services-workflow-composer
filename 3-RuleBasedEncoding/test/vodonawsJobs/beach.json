@@ -1,0 +1,7 @@
+
+{
+    "hls": [720, 540, 360, 270],  
+    "srcVideo": "beach_aerial_short.mp4", 
+    "FrameCapture": true,
+    "MetadataTestMessage": "Hello from the other side!" 
+}

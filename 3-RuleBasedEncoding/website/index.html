@@ -1,0 +1,1056 @@
+<html lang="en">
+
+<head>
+    <title>Rules-based Encoding on AWS</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width">
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+        crossorigin="anonymous">
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN"
+        crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.2.1.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js" integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh"
+        crossorigin="anonymous"></script>
+
+    <!-- Fonts from Google -->
+    <link href='https://fonts.googleapis.com/css?family=Nunito:400,300' rel='stylesheet' type='text/css'>
+
+    <!-- Get MediaElement JS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/mediaelement/4.2.7/mediaelementplayer.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mediaelement/4.2.7/mediaelement-and-player.min.js"></script>
+
+
+    <!-- HLS player -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js"></script>
+
+    <link href="https://vjs.zencdn.net/6.6.3/video-js.css" rel="stylesheet">
+    <script src="https://vjs.zencdn.net/6.6.3/video.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/videojs-contrib-hls/5.12.2/videojs-contrib-hls.js"></script>
+
+
+    <link href="style.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/renderjson@1.4.0/renderjson.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/URI.js/1.19.1/URI.min.js" integrity="sha256-D3tK9Rf/fVqBf6YDM8Q9NCNf/6+F2NOKnYSXHcl0keU="
+        crossorigin="anonymous"></script>
+    <script data-main="js/app" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" integrity="sha256-1fEPhSsRKlFKGfK3eO710tEweHh1fwokU5wFGDHO+vg="
+        crossorigin="anonymous"></script>
+
+</head>
+
+<body style="background-color: white">
+
+    <div class="page-container">
+        <!-- Navigation buttons-->
+        <div class="row" style="padding-bottom:3rem; padding-top:2rem;">
+            <div class="col-12">
+                <a href="index.html" class="btn btn-light top-button">Workflows</a>
+                <a href="rules_list.html" class="btn btn-light top-button">Rules</a>
+                <button type="button" data-toggle="modal" data-target="#configureEndpointModal" class="btn btn-light top-button">Setup</button>
+
+            </div>
+        </div>
+
+        <div class="row" style="padding-top:20px; margin:10px;">
+            <div class="col-12">
+                <img src="images/RulesBasedEncodingWorkflow1.png" class="img-fluid rounded mx-auto d-block" alt="Responsive image">
+            </div>
+
+        </div>
+        <div class="row" style="padding-bottom:3rem; padding-top:2rem;">
+            <div class="col-12">
+                <h5>The Rules-Based Encoding Workflow automates encoding decisions using analysis of the properties of
+                    the input video to determine the settings needed to transform the video to a desired output format.</h5>
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">The <b>Analysis</b> step runs Mediainfo to get the properties of the
+                        Video package and streams.</li>
+                    <li class="list-group-item">The <b>Rules</b> step runs predefined rules that are mapped to
+                        MediaConvert job templates. When a rule run against the properties of the video evaluates to
+                        TRUE, the mapped template is selected and passed to the Encode step.</li>
+                    <li class="list-group-item">The <b>Encode</b> step uses the Video On-Demand on AWS solution to
+                        convert the video using the selected MediaConvert job template.</li>
+                </ul>
+            </div>
+
+        </div>
+        <div class="row">
+            <div class="col-md-3">
+                <button type="button" onclick="location.reload();" class="btn btn-secondary btn-lg float-left" style="margin-top: 24px;">Refresh
+                    Results</button>
+            </div>
+            <div class="col-md-3"> </div>
+            <div class="col-md-3"> </div>
+            <div class="col-md-3"> </div>
+        </div>
+
+        <div class="row" style="padding-top:20px;">
+            <table class="table table-condensed table-hover">
+                <thead>
+                    <tr>
+                        <th scope="col">INPUT THUMBNAIL</th>
+                        <th scope="col">ID</th>
+                        <th scope="col">INPUT VIDEO</th>
+                        <th scope="col">SELECTED TEMPLATE</th>
+                        <th scope="col">STATUS</th>
+                        <th scope="col">CREATE TIME</th>
+                    </tr>
+                </thead>
+                <tbody id="loadHere">
+                </tbody>
+            </table>
+        </div>
+
+
+
+        <div class="row">
+            <div id="thumbnails"></div>
+        </div>
+
+
+        <!-- Modal that contains an image if a thumbnail is clicked. -->
+        <div id="myModal" class="modal">
+            <img class="modal-content" id="img01">
+            <div id="caption"></div>
+        </div>
+
+    </div>
+</body>
+
+
+<!-- MODALS -->
+
+<!-- view modal -->
+
+
+<!-- Configure Endpoint Modal -->
+<div class="modal fade" id="configureEndpointModal" tabindex="-1" role="dialog" aria-labelledby="configureEndpointModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="configureEndpointModalLabel">Modal title</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div id="endpoint_connection_alert">
+            </div>
+            <div class="modal-body">
+                <div class="container">
+                    <form>
+                        <div class="form-group row">
+                            <label for="input_endpoint_url" class="col-2 col-form-label">Endpoint URL</label>
+                            <div class="col-10">
+                                <input type="text" class="form-control" id="input_endpoint_url" placeholder="">
+                            </div>
+                        </div>
+                        <div class="form-group row">
+                            <label for="input_endpoint_key" class="col-2 col-form-label">API Key</label>
+                            <div class="col-10">
+                                <input type="password" class="form-control" id="input_endpoint_key" placeholder="">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="dropdown">
+                    <button class="btn btn-info dropdown-toggle" type="button" id="connectionHistoryMenuButton"
+                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">History</button>
+                    <div id="connection-historyDropdownMenu" class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                    </div>
+                </div>
+                <button type="button" id="save_endpoint_connection" class="btn btn-success">Save</button>
+                <button type="button" id="cancel_endpoint_connection" class="btn btn-danger" data-dismiss="modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Workflow Modal-->
+<div id="create_workflow_modal" class="modal animated bounceIn" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+    aria-hidden="true">
+
+    <!-- dialog -->
+    <div class="modal-dialog">
+
+        <!-- content -->
+        <div class="modal-content">
+            <!-- footer -->
+            <div class="modal-header">
+                <h3>Configure and Run a Rules-based Encoding Workflow</h3>
+                <button type="button" id="close-modal" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+                <!--div class="row" style="width:100%;">
+                    <div class="col-12">
+                            <button class="btn btn-secondary float-right" data-dismiss="modal">
+                                    Close
+                            </button>
+                    </div-->
+            </div>
+            <!--header-->
+            <!--/div-->
+
+            <!-- body -->
+            <div class="modal-body">
+
+                <div class="row" style="padding-top:20px;">
+                    <img src="images/RulesBasedEncodingWorkflow1.png" class="img-fluid rounded mx-auto d-block"" alt="
+                        Responsive image">
+                </div>
+
+                <div class="row" style="padding-top:20px; margin:10px">
+
+                    <div id="step-1" class="">
+                        <h5>Step 1: Create rules</h5>
+                        <p>
+                            When the Rules-based encoding workflow executes, it will run Mediainfo analysis against the
+                            input video.
+                            You can define rules against the output of this analysis to help decide what the encoding
+                            job settings
+                            should be in the next steps of the workflow. You don't need to create any rules to run the
+                            demo, but you
+                            can experiment with how rules are created go to the <a href="rules_list.html" target="_blank"
+                                class="link">Rules page </a>.
+                            For this demo, we have created rules and templates that work well with the properties of
+                            the demo videos.
+                        </p>
+                    </div>
+                    <div id="step-2" class="">
+                        <h5>Step 2: Create MediaConvert job templates</h5>
+                        Create job templates with different settings to be used when input properties meet the
+                        conditions outlined in your rules
+                    </div>
+                    <div id="step-3" class="" style="padding-top:20px;">
+                        <h5>Step 3: Map rules to MediaConvert job templates</h5>
+                        <p>
+                            The Rules-based encoding workflow runs each selected rule against an input in the order you
+                            configure them. If a rule evaluates to FALSE for the input, then the next rule is run. If a
+                            rule evaluates to TRUE
+                            for the input, then the MediaConvert job template that is mapped to the rule is selected
+                            and the workflow moves
+                            on to the next step without evaluating more rules. If ano rule evaluates to true for the
+                            input then the
+                            default template is selected.
+                        </p>
+
+                        <form class="form-inline"></form>
+                        <div class="row" style="padding-top:20px;">
+                            <div class="col-auto">
+                                <label for="default-template-selector">Default Template:</label>
+                                <select class="selectpicker" id="default-template-selector"" data-width=" auto"
+                                    placeholder="Default Template">
+                                </select>
+                            </div>
+                        </div>
+                        <div class="row" style="padding-top:20px;">
+                            <div class="col-auto">
+                                <label for="rules-selector">Rule:</label>
+                                <select class="selectpicker" id="rules-selector" data-width="auto" placeholder="Rule name">
+
+                                </select>
+                            </div>
+                            <div class="col-auto">
+                                <label for="templates-selector">Template:</label>
+                                <select class="selectpicker" id="templates-selector" data-width="auto" placeholder="Template name">
+                                </select>
+                            </div>
+
+
+                            <div class="col-auto">
+                                <button class="btn-sm btn-secondary" onclick="add_rule_and_template_to_list()">Add
+                                    mapping</button>
+                            </div>
+                        </div>
+                        </form>
+                        <div id="added-rules"></div>
+                    </div>
+                    <div id="step-4" class="" style="padding-top:20px;">
+                        <h5>Step 4: Select an input for the workflow</h5>
+                        <p>
+                            Several inputs video inputs with different properties are provided below to test the
+                            workflow.
+                        </p>
+                        <div class="row" style="padding-top:20px;">
+                            <div class="col">
+                                <label for="input-video-selector">Input Video:</label>
+                                <select class="selectpicker" id="input-video-selector" data-live-search="true">
+
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+                <div id="loading-modal"></div>
+
+                <button type="button" id="run-workflow-button" onclick="start_rules_workflow();" class="btn btn-success btn-lg btn-block">Run
+                    Workflow</button>
+            </div>
+
+            <!-- body -->
+
+            <!-- footer -->
+            <div class="modal-footer">
+                <div id="create-workflow-result"></div>
+                <!-- footer -->
+
+            </div>
+            <!-- content -->
+
+        </div>
+        <!-- dialog -->
+
+    </div>
+
+</html>
+
+<script>
+
+    // Constant Variables used for create workflow modal.
+    var BASE_URL = window.location['href'].replace('index.html', '');
+    //var WATCHFOLDER_BUCKET_URL = "s3://" + config['watchfolderBucket'];
+    var INPUT_FILE_URLS = [];
+    var INPUT_FILES = [];
+    var DEFAULT_TEMPLATES = ["RuleDemoDefault"];
+    var TEMPLATES = ["RuleDemoDefault"];
+    var GLOBAL_RULES_LIST = [];
+
+    //document.onload = init();
+    $.ajaxSetup({
+        error: function (xhr, status, error) {
+            alert("An AJAX error occured: " + status + "\nError: " + error);
+        }
+    });
+
+    function init() {
+        require(['app/connections'], function (connections) {
+
+            if (null != connections.get_current()) {
+                console.log("current connection: " + connections.get_current());
+                update_main_table();
+                // New stuff for VOD on AWS
+
+                // Get the new rules
+                get_new_rules();
+
+                // Some initial tasks
+                populate_input_video_selector();
+            }
+            else {
+                console.log("no current connection - set a connection to get going");
+            }
+
+
+            console.log("history:" + connections.get_history())
+
+            $('#configureEndpointModal').on('show.bs.modal', function (e) {
+                console.log("this is the modal");
+                // do something...
+            });
+
+            requirejs(["ruleapp/ui/settings_menu"]);
+
+        });
+    }
+
+
+    function start_rules_workflow() {
+
+        //Disable buttons and add loading image
+        $("#close-modal").prop("disabled", true);
+        $("#run-workflow-button").prop("disabled", true);
+        $("#loading-modal").html('<img src="https://i.imgur.com/k9GyXLC.gif">');
+
+        //https://i.imgur.com/k9GyXLC.gif
+
+        // 1. Run the create workflow
+        //  I get the workflowID from this. 
+        // Make list of rulenames and templates
+        // Get the video input
+
+        var input_video = $("#input-video-selector").find(":selected").text();
+        var input_uri = "s3://" + config['watchfolderBucket'] + "/" + input_video;
+
+        for (var i = 0; i < GLOBAL_RULES_LIST.length; i++) {
+            delete GLOBAL_RULES_LIST[i].id;
+        }
+
+        console.log("My global rules list is now " + JSON.stringify(GLOBAL_RULES_LIST));
+        var object_input = {
+            "inputUri": input_uri,
+            "encode_rules": GLOBAL_RULES_LIST
+        }
+        postData(config.apiEndpoint + "rulesworkflow", object_input)
+            .then(data => {
+                console.log("the response is " + JSON.stringify(data));
+                location.reload();
+            });
+
+    }
+
+    function postData(url = ``, api_key = "", data = {}) {
+        return fetch(url, {
+            method: "POST", // *GET, POST, PUT, DELETE, etc.
+            mode: "cors", // no-cors, cors, *same-origin
+            cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
+            headers: {
+                "Content-Type": "application/json; charset=utf-8",
+                'x-api-key': api_key
+            },
+            redirect: "follow", // manual, *follow, error
+            referrer: "no-referrer", // no-referrer, *client
+            body: JSON.stringify(data), // body data type must match "Content-Type" header
+        })
+            .then(response => response.json()); // parses response to JSON
+    }
+
+    function getData(url = ``, api_key = "", data = {}) {
+        return fetch(url, {
+            method: "GET", // *GET, POST, PUT, DELETE, etc.
+            mode: "cors", // no-cors, cors, *same-origin
+            cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
+            headers: {
+                "Content-Type": "application/json; charset=utf-8",
+                'x-api-key': api_key
+            },
+            redirect: "follow", // manual, *follow, error
+            referrer: "no-referrer", // no-referrer, *client
+        })
+            .then(response => response.json()); // parses response to JSON
+    }
+
+    function populate_input_video_selector() {
+        var html = "";
+
+        for (var i = 0; i < INPUT_FILES.length; i++) {
+            html += '<option data-tokens="ketchup mustard">' + INPUT_FILES[i] + '</option>';
+        }
+
+        $("#input-video-selector").html(html);
+    }
+
+    // Retrieve all of the available rules defined using the rules API,  these will be selectable
+    // in a menu drop down in the create workflow modal.
+    function get_new_rules() {
+        var connections = require('app/connections');
+        var current_connection = connections.get_current()
+        var api_url = current_connection[0] + "/rules";
+
+        getData(api_url, current_connection[1])
+            .then(function (data) {
+                // Update the rules selector
+                console.log(data);
+                var html = "";
+                for (var i = 0; i < data.length; i++) {
+                    html += "<option>" + data[i]["name"] + "</option>"
+                }
+                $("#rules-selector").html(html);
+
+                // Add the templates to the template selector and default templates selector
+                html = "";
+                for (var i = 0; i < TEMPLATES.length; i++) {
+                    html += "<option>" + TEMPLATES[i] + "</option>";
+                }
+                $("#templates-selector").html(html);
+
+                html = "";
+                for (var i = 0; i < DEFAULT_TEMPLATES.length; i++) {
+                    html += "<option>" + DEFAULT_TEMPLATES[i] + "</option>";
+                }
+                $("#default-template-selector").html(html);
+
+            });
+            
+    }
+
+    // Red X
+    function remove_card() {
+        console.log("Removing card");
+        console.log($(this));
+    }
+
+    // Generate html to show rule:template pairs selected in the create workflow modal
+    function add_rule_and_template_to_list() {
+        var rule_name = $("#rules-selector").find(":selected").text();
+        var id = guid();
+
+        // Add template to list
+        var template_name = $("#templates-selector").find(":selected").text();
+        var remove_button = '<button type="button" id="' + id + '" class="close" aria-label="Close"><span>&times;</span></button>';
+
+        var html = '<div class="card"><div class="card-body"> Rule:<b> ' + rule_name + ' </b>Template:<b> ' + template_name + '</b>' + remove_button + ' </div></div>';
+        $("#added-rules").append(html);
+
+        // Add click handler to remove the card if it is not needed
+        $('#' + id).click(function () {
+            var cur_id = $(this).attr("id");
+            console.log(cur_id);
+
+            // Search through global list of rules added to the page and remove it
+            for (var i = 0; i < GLOBAL_RULES_LIST.length; i++) {
+                if (GLOBAL_RULES_LIST[i]["id"] == String(cur_id)) {
+                    GLOBAL_RULES_LIST.splice(i, 1);
+                }
+            }
+            $(this).parent().parent().remove();
+
+        });
+        GLOBAL_RULES_LIST.push({
+            "id": id,
+            "rulename": rule_name,
+            "template": template_name
+        });
+        console.log("Global rules list " + JSON.stringify(GLOBAL_RULES_LIST));
+    }
+
+    // Helper for constructing names of thumbnail files generated by VOD on AWS workflow.  Should replace this code with 
+    // population from S3 list objects 
+    function zero_pad(string) {
+        var str = "" + string
+        var pad = "0000000"
+        var ans = pad.substring(0, pad.length - str.length) + str
+        return ans;
+    }
+
+    // generate a unique id for rule mappings - only used in this webpage to keep track of the currently
+    // defined set of mappings in the create workflow modal
+    function guid() {
+        function s4() {
+            return Math.floor((1 + Math.random()) * 0x10000)
+                .toString(16)
+                .substring(1);
+        }
+        return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+    }
+
+    // get an input thumbnail to use for the list of created workflows
+    function get_first_thumbnail(source_video) {
+        var url_bucket = "http://burkleaa-files.s3.amazonaws.com/vodaws-thumbnails/";
+        var base_name = source_video.split(".")[0].replace("_hevc", "");
+        var base_url = url_bucket + base_name + '/';
+
+        return base_url + base_name + '_thumb.' + zero_pad(1) + '.jpg';
+    }
+
+    // get a representative thumbnail from output thumbnails
+    // load the thumbnail carosel with VOD on AWS output thumbnails
+    function get_first_thumbnail_cdn(source_video, guid, cdn_url) {
+        var parser = document.createElement('a');
+        parser.href = cdn_url;
+
+        cdn_url_protocol = parser.protocol; // => "http:"
+        parser.host;     // => "example.com:3000"
+        cdn_url_hostname = parser.hostname; // => "example.com"
+        parser.port;     // => "3000"
+        parser.pathname; // => "/pathname/"
+        parser.hash;     // => "#hash"
+        parser.search;   // => "?search=test"
+        parser.origin;   // => "http://example.com:3000"
+
+        // The url passed back for Thumbnails is the hls url so we have to fix it...
+        var url_bucket = cdn_url_protocol + "//" + cdn_url_hostname + "/" + guid + "/";
+        var base_name = source_video.split(".")[0].replace("_hevc", "");
+        var base_url = url_bucket + 'thumbnails' + '/';
+
+        var url = base_url + base_name + '_tumb.' + zero_pad(2) + '.jpg'
+        return url;
+    }
+
+    // load the thumbnail carosel with VOD on AWS output thumbnails
+    function make_thumbnails_cdn(source_video, guid, cdn_url) {
+
+        var parser = document.createElement('a');
+        parser.href = cdn_url;
+
+        cdn_url_protocol = parser.protocol; // => "http:"
+        parser.host;     // => "example.com:3000"
+        cdn_url_hostname = parser.hostname; // => "example.com"
+        parser.port;     // => "3000"
+        parser.pathname; // => "/pathname/"
+        parser.hash;     // => "#hash"
+        parser.search;   // => "?search=test"
+        parser.origin;   // => "http://example.com:3000"
+
+        // The url passed back for Thumbnails is the hls url so we have to fix it...
+        var url_bucket = cdn_url_protocol + "//" + cdn_url_hostname + "/" + guid + "/";
+        var base_name = source_video.split(".")[0].replace("_hevc", "");
+        var base_url = url_bucket + 'thumbnails' + '/';
+
+        var inner_html = '';
+        var active = '';
+
+        var number = 10;
+
+        for (var i = 1; i < 10; i++) {
+            // thumb is mispelled by VOD on AWS
+            var url = base_url + base_name + '_tumb.' + zero_pad(i) + '.jpg'
+
+            if (i == 1) {
+                active = 'active';
+            } else {
+                active = '';
+            }
+
+            inner_html += `<div class="carousel-item ` + active + `">
+    <img class="d-block w-100" src="`+ url + `" alt="Thumbnails">
+    </div>`;
+
+        }
+
+        var indicators = "";
+        for (var i = 0; i < number; i++) {
+            if (i == 0) {
+                indicators += '<li data-target="#carouselExampleIndicators" data-slide-to="0" class="active"></li>';
+            } else {
+                indicators += '<li data-target="#carouselExampleIndicators" data-slide-to="' + i + '"></li>';
+            }
+        }
+
+        var html = `
+        <h5 class="card-title" style="padding-top:30px" >THUMBNAILS</h5>
+            <div id="carouselExampleIndicators" class="carousel slide" data-ride="carousel">
+        <ol class="carousel-indicators">
+            `+ indicators + `
+        </ol>
+        <div class="carousel-inner">
+            `+ inner_html + `
+        </div>
+        <a class="carousel-control-prev" href="#carouselExampleIndicators" role="button" data-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="sr-only">Previous</span>
+        </a>
+        <a class="carousel-control-next" href="#carouselExampleIndicators" role="button" data-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="sr-only">Next</span>
+        </a>
+        </div>
+    `
+        return html;
+    }
+
+    // Add event handlers to the accordian table:
+    // - play video when a row of he accordian table is expanded  
+    // - stop player when the row is collapsed
+    // - load thumbnails to carousel
+    function attach_table_event_handlers() {
+        $('.collapse').on('show.bs.collapse', function () {
+
+
+            console.log($(this).data());
+
+            var data = $(this).data();
+            var status = data['status'].toLowerCase();
+
+            if (status == "complete") {
+                let player_id = `video_` + data['id'];
+                $('#video_div_' + data['id']).html(`
+                <video id="`+ player_id + `" height="100%" width="100%" class="video-js vjs-default-skin vjs-scrubbing" controls data-setup='{"fluid": true}' preload="none" muted>
+                </video> `
+                );
+
+                let player = videojs("#" + player_id);
+                console.log("playa:" + data['hlsurl'])
+                player.src({
+                    "type": "application/x-mpegURL",
+                    "src": data['hlsurl']
+                });
+                player.play();
+
+                // Add thumbnails below the player
+
+                console.log(data['srcvideo']);
+
+                //doesn't work bc local data at time of event doesn't include the job info
+                $('#video_div_' + data['id']).append(make_thumbnails_cdn(data['srcvideo'], data['guid'], data['hlsurl']));
+
+
+            } else if (status == "ingest" || status == "started") {
+                $('#video_div_' + data['id']).html(`
+                <br/><br/>
+                <div>
+                    <img height="200px" src="http://blog.teamtreehouse.com/wp-content/uploads/2015/05/InternetSlowdown_Day.gif"></img>
+                </div>
+                <br/><br/>
+                <h4>Video Transcoding in Progress</h4>`
+                );
+            } else if (status == "error") {
+                $('#video_div_' + data['id']).html(`
+                <h3>Error has occured on Job</h3>`
+                );
+            }
+
+            $('.collapse').collapse('hide');
+        });
+
+        $('.collapse').on('hide.bs.collapse', function () {
+            var data = $(this).data();
+
+            if (data['status'].toLowerCase() == "complete") {
+                let player_id = `video_` + data['id'];
+                // Remove the player and other html
+
+                var oldPlayer = document.getElementById(player_id);
+                videojs(oldPlayer).dispose();
+
+                $('#video_div_' + data['id']).html('');
+            }
+        });
+
+
+    }
+
+
+    function tostring(obj) {
+        return obj ? obj : "Not Specified";
+    }
+
+    function create_rules_paragraph(data) {
+
+        var rules_str = ""
+        rules_str += '<h6 class="card-subtitle mb-2 text-muted">GUID</h6>' +
+            '<div class="card" >' +
+            '<div class="card-body">' +
+            '<p class="card-text">' + data.guid + '</p>' +
+            '</div>' +
+            '</div>';
+
+
+        rules_str += '<p></p><h6 class="card-subtitle mb-2 text-muted">SELECTED TEMPLATE</h6>' +
+            '<div class="card" >' +
+            '<div class="card-body">' +
+            '<a href="https://us-west-2.console.aws.amazon.com/mediaconvert/home?region=us-west-2#/templates/details/' + data.jobTemplate + '" class="card-link" target="_blank">' + data.jobTemplate + '</a><p></p>' +
+            '</div>' +
+            '</div>';
+
+        // If no rules are here just say that.
+        if (!("ruleMappings" in data) || data.ruleMappings.length == 0) {
+            rules_str += '<p></p><h6 class="card-subtitle mb-2 text-muted"> NO RULE MAPPINGS DEFINED - USING DEFAULT TEMPLATE </h6>';
+        } else {
+            for (var i = 0; i < data.ruleMappings.length; i++) {
+                var test_result;
+
+                if ("testResult" in data.ruleMappings[i]) {
+
+                    if (data.ruleMappings[i]['testResult'] == true) {
+                        test_result = test_result = '<img width=20px src="icons/if_check_298738.png"/>';
+                        test_result = '<span class="badge badge-pill badge-success">TRUE</span>'
+                        //test_result =  'Run <img width=20px src="https://cdn1.iconfinder.com/data/icons/color-bold-style/21/34-512.png"/>';
+                    } else {
+                        test_result = '<span class="badge badge-pill badge-danger">FALSE</span>';
+                        //test_result =  '<img width=20px src="icons/if_x_298889.png"/>';
+                        //test_result = '<i class="far fa-times-circle"></i>';
+                        //test_result =  'Run <img width=20px src="https://cdn1.iconfinder.com/data/icons/color-bold-style/21/34-512.png"/>';
+                    }
+                } else {
+                    test_result = test_result = '<span class="badge badge-pill badge-secondary">NOT RUN</span>';
+                }
+
+
+                rules_str += '<p></p><h6 class="card-subtitle mb-2 text-muted">RULE # ' + (i + 1) + ' </h6>' +
+                    '<div class="card" >' +
+                    '<div class="card-body">' +
+                    '<p class="card-text"><b>RULE NAME:</b> ' + data.ruleMappings[i].ruleName + ' &nbsp; <b>RESULT:</b> ' + test_result + ' &nbsp; <p><b>TEMPLATE: </b>' + data.ruleMappings[i].template + '</p>' +
+                    '</div>' +
+                    '</div>';
+            };
+        }
+
+
+
+        return rules_str;
+    }
+
+    function build_outputs(data) {
+        var cloudFront = data.cloudFront;
+        var frame_capture_url = data.FrameCaptureUrl;
+
+        var outputs_card = '<h5 class="card-title">OUTPUTS</h5>' +
+            '<p class="card-text"> </p>' +
+            '<h6 class="card-subtitle mb-2 text-muted">' + 'CLOUDFRONT CDN DISTRIBUTION' + '</h6>' +
+            '<div class="card" >' +
+            '<div class="card-body">' +
+            '<a href="https://' + cloudFront + '" class="card-link" target="_blank">' + cloudFront + '</a><p></p>' +
+            '</div>' +
+            '</div>';
+
+        if ("encodingJob" in data) {
+            for (var i = 0; i < data.encodingJob['Settings']['OutputGroups'].length; i++) {
+                var output = data.encodingJob['Settings']['OutputGroups'][i]
+                var output_group_type = output['OutputGroupSettings']['Type'].split('_')[0];
+                var output_group_name = output['OutputGroupSettings']['Name'];
+                var output_group_custom_name = "CustomName" in output['OutputGroupSettings'] ? "(" + output['OutputGroupSettings']['CustomName'] + ")" : "";
+                var output_group_s3 = "undefined";
+                var output_group_playlist = "undefined";
+
+
+                if (output_group_type === 'HLS') {
+                    output_group_s3 = output['OutputGroupSettings']['HlsGroupSettings']['Destination'];
+                    output_group_playlist = data.hlsUrl
+
+                } else if (output_group_type === 'DASH') {
+                    output_group_s3 = output['OutputGroupSettings']['DashIsoGroupSettings']['Destination'];
+                    output_group_playlist = data.dashUrl
+                } else if (output_group_type === 'FILE') {
+                    output_group_s3 = output['OutputGroupSettings']['FileGroupSettings']['Destination'];
+                    output_group_playlist = "none";
+                }
+
+                var output_card = '<p></p><h6 class="card-subtitle mb-2 text-muted">' + output_group_type + ' ' + output_group_custom_name + '</h6>' +
+                    '<div class="card" >' +
+                    '<div class="card-body">' +
+                    '<h8 class="card-subtitle mb-2 text-muted">S3 OBJECTS</h8><p></p>' +
+                    '<p class="card-text">' + output_group_s3 + '</p>' +
+                    '<h8 class="card-subtitle mb-2 text-muted">PLAYLIST</h8><p></p>' +
+                    '<a href="' + output_group_playlist + '" class="card-link" target="_blank">' + output_group_playlist + '</a><p></p>' +
+                    '</div>' +
+                    '</div>'
+
+                outputs_card = outputs_card + output_card
+
+            }
+        }
+
+        return outputs_card;
+    };
+
+    function update_main_table() {
+        //var api = config.apiEndpoint + "vodonaws/";
+        var connections = require('app/connections');
+        var current_connection = connections.get_current();
+        var api =  current_connection[0] + "/vodonaws/";
+
+        getData(api, current_connection[1])
+            .then(function (data_vod) {
+                console.log(data_vod);
+
+                data = data_vod;
+                console.log("here 1");
+                // this will help you see data structure while you develop the table
+                console.log(data);
+                // then create your table
+                var rows = data;
+
+                $('#main-table-view').html("");
+                for (var i = 0; i < rows.length; i++) {
+                    var rules_paragraph = create_rules_paragraph(rows[i]);
+
+                    let sourcevideo = rows[i]['srcBucket'] + "/" + rows[i]['srcVideo'];
+
+                    let thumbnail = "https://s3.amazonaws.com/vodasset/Assets/1d21be49-fad0-4ff9-8c5b-d4cb4ef8fca7/Thumbnails/windsurfing_shore_20_720p60.00003.jpg";
+
+                    console.log(rows[i]['srcVideo'])
+
+                    var srcUri = rows[i]['srcBucket'] + "/" + rows[i]['srcVideo']
+                    var src_video_thumbnail = get_first_thumbnail(rows[i]['srcVideo']);
+                    var src_video_thumbnail = get_first_thumbnail_cdn(rows[i]['srcVideo'], rows[i]['guid'], rows[i]['hlsUrl']);
+                    var src_video_thumbnail = ('thumbNailUrl' in rows[i]) ? rows[i]['thumbNailUrl'][0] : "";
+                    var mediainfo = "srcMediainfo" in rows[i] ? rows[i]['srcMediainfo'] : "{}";
+
+                    var jobMetadata = ('encodingJob' in rows[i] && "UserMetadata" in rows[i]['encodingJob']) ? rows[i]['encodingJob']['UserMetadata'] : "{}"
+
+                    var output_groups_card = build_outputs(rows[i]);
+
+                    $('#loadHere').append(
+                        '<tr data-toggle="collapse" data-target=".' + rows[i]['guid'] + ' "class="clickable">' +
+                        '<td><img src=' + src_video_thumbnail + ' alt="http://blog.teamtreehouse.com/wp-content/uploads/2015/05/InternetSlowdown_Day.gif" border=3 height=100></img></td>' +
+                        '<td>' + rows[i]['guid'] + '</td>' +
+                        '<td>' + 's3://' + sourcevideo + '</td>' +
+                        '<td>' + rows[i]['jobTemplate'] + '</td>' +
+                        '<td>' + rows[i]['workflowStatus'] + '</td>' +
+                        '<td>' + rows[i]['startTime'] + '</td>' +
+                        '</tr>' +
+                        '<tr>' +
+                        '<td class="hiddenRow" colspan="6">' +
+                        '<div class="row">' +
+                        '<div style="width:100%" data-id=' + i +
+                        ' data-hlsurl=' + rows[i]['hlsUrl'] +
+                        ' data-status=' + rows[i]['workflowStatus'] +
+                        ' data-srcvideo=' + rows[i]['srcVideo'] +
+                        ' data-dashurl=' + rows[i]['dashUrl'] +
+                        ' data-guid=' + rows[i]['guid'] +
+                        ' data-FrameCaptureUrl=' + rows[i]['FrameCaptureUrl'] +
+                        ' class="collapse ' + rows[i]['guid'] + '">' +
+                        '<div class="container">' +
+                        '<div class="row">' +
+
+                        '<div class="col-3">' +
+                        '<div class="card">' +
+                        '<div class="card-body settings-card">' +
+                        '<h5 class="card-title">VIDEO PREVIEW</h5>' +
+                        '<div id="video_div_' + i + '" </div>' +
+                        '</div>' +
+                        '</div>' +
+
+                        '</div></div>' +
+
+                        '<div class="col-3">' +
+                        '<div class="card" >' +
+                        '<div class="card-body settings-card">' +
+                        '<h5 class="card-title">ANALYSIS</h5><p></p>' +
+                        '<h6 class="card-subtitle mb-2 text-muted">INPUT VIDEO</h6>' +
+                        '<div class="card" >' +
+                        '<div class="card-body">' +
+                        //'<h8 class="card-subtitle mb-2 text-muted">S3 OBJECT</h8><p></p>' +
+                        //'<p class="card-text"> s3://' + tostring(rows[i]['srcBucket'])  + '/' + rows[i]['srcVideo'] + '</p>' +
+                        '<p class="card-text"> ' + rows[i]['srcBucket'] + "/" + rows[i]['srcVideo'] + '</p>' +
+                        '</div>' +
+                        '</div>' +
+                        '<p></p>' +
+                        '<h6 class="card-subtitle mb-2 text-muted">MEDIAINFO</h6>' +
+                        '<div class="card" >' +
+                        '<div class="card-body">' +
+                        //'<pre><code>' + JSON.stringify(mediainfo ,null,2)  + '</code></pre>' +
+                        '<pre><code>' + mediainfo + '</code></pre>' +
+                        '</div>' +
+                        '</div>' +
+                        '</div>' +
+                        '</div>' +
+                        '</div>' +
+
+                        '<div class="col-3">' +
+                        '<div class="card" >' +
+                        '<div class="card-body settings-card">' +
+                        '<h5 class="card-title">RULES </h5><p></p>' +
+                        rules_paragraph +
+                        '</div>' +
+                        '</div>' +
+                        '</div>' +
+
+                        '<div class="col-3">' +
+                        '<div class="card" >' +
+                        '<div class="card-body settings-card">' +
+                        '<h5 class="card-title">ENCODING </h5><p></p>' +
+                        '<p></p><h6 class="card-subtitle mb-2 text-muted">VIDEO ON DEMAND ON AWS ASSET</h6>' +
+                        '<div class="card" >' +
+                        '<div class="card-body">' +
+                        '<p class="card-text"><b>guid:</b> ' + rows[i]['guid'] + '</p>' +
+                        '<p class="card-text"><b>srcMetadataFile:</b> ' + rows[i]['srcMetadataFile'] + '</p>' +
+                        '</div>' +
+                        '</div>' +
+                        '<p></p><h6 class="card-subtitle mb-2 text-muted">MEDIACONVERT JOB</h6>' +
+                        '<div class="card" >' +
+                        '<div class="card-body">' +
+                        '<p class="card-text"><b>Start Time:</b> ' + rows[i]['startTime'] + '</p>' +
+                        '<p class="card-text"><b>' + 'End Time: </b>' + rows[i]['EndTime'] + '</p>' +
+                        '<p class="card-text"><b>' + 'Job ID: </b>' +
+                        '<a href="https://us-west-2.console.aws.amazon.com/mediaconvert/home?region=us-west-2#/jobs/details/' + rows[i]['ecodeJobId'] + '" class="card-link" target="_blank">' + rows[i]['ecodeJobId'] + '</a>' +
+                        '</div>' +
+                        '</div>' +
+                        '<p></p><h6 class="card-subtitle mb-2 text-muted">MEDIACONVERT JOB USERMETADATA</h6>' +
+                        '<div class="card" >' +
+                        '<div class="card-body">' +
+                        '<pre><code>' + JSON.stringify(jobMetadata, null, 2) + '</code></pre>' +
+                        '</div>' +
+                        '</div>' +
+                        '<p class="card-text"> </p>' + output_groups_card +
+                        '</div>' +
+                        '</div>' +
+                        '</div>' +
+
+                        '</div>' +
+                        '</div>' +
+                        '</div>' +
+                        '</div>' +
+                        '</td>' +
+                        '</tr>' +
+                        '</table>');
+                }
+
+                attach_table_event_handlers();
+            });
+    }
+
+    function create_player(video_url) {
+        $('#preview-video-container').html(`<video id="preview_video_2" style="height50px; width:100%" class="video-js vjs-default-skin" controls  data-setup='{"fluid": true}'>
+    <source
+        src="`+ video_url + `"
+        type="application/x-mpegURL">
+    </video>`);
+
+        videojs("preview_video_2", {}, function () {
+            //   this.offset({
+            //     start: data.start_time,
+            //     end: data.end_time,
+            //     restart_beginning: false //Should the video go to the beginning when it ends
+            //   });
+        });
+    }
+
+    function dispose_preview() {
+        $('#myModal').on('hidden.bs.modal', function () {
+            videojs("preview_video_2").dispose();
+        });
+    }
+
+    function submit_new_key() {
+        // Get new key from input box.
+        var key = $("#key-search-box").val();
+
+        // New mp4 url.
+        var mp4_url = BASE_URL + 'assets/' + key + '/MP4/' + key + '_MPEG2Mezzanine1080_15Mbps.mp4';
+
+        var video_element = document.getElementById("mp4-video");
+        video_element.src = mp4_url;
+        video_element.load();
+
+        // Get the thumbnails.
+        setup_thumbnails(key);
+
+        // Setup the HLS player again
+        play_hls(key);
+        play_mp4(key);
+
+    }
+
+    function play_hls(url, id) {
+
+        if (Hls.isSupported()) {
+            var video = document.getElementById(id);
+            var hls = new Hls();
+            hls.loadSource(url);
+            hls.attachMedia(video);
+            hls.on(Hls.Events.MANIFEST_PARSED, function () {
+                video.play();
+            });
+        }
+    }
+
+    function setup_thumbnails(search_key) {
+        var html = '';
+
+        for (var i = 0; i < 50; i++) {
+            var number = ('000000' + i).slice(-7); //Zero padding the number to 5 digits
+            var img_src = BASE_URL + "assets/" + search_key + "/Thumbnails/VANLIFE." + number + ".jpg"
+            html += `<div class="img-container thumbnail pull-right"><img onError="this.parentElement.style.display = 'none';" src="` + img_src + `" alt="VANLIFE.` + number + `.jpg" class="image"><div class="overlay"><div class="text">VANLIFE.` + number + `.jpg</div></div></div>`
+        }
+        $("#thumbnails").html(html);
+
+        // Now make the thumbnails clickable
+        var modal = document.getElementById('myModal');
+        var modalImg = document.getElementById("img01");
+        var captionText = document.getElementById("caption");
+
+        // Get the image and insert it inside the modal - use its "alt" text as a caption
+        $('.img-container').click(function () {
+            var img = this.childNodes[0];
+            modal.style.display = "block";
+            modalImg.src = img.src;
+            captionText.innerHTML = img.alt;
+        });
+
+        // Get the <span> element that closes the modal
+        var span = document.getElementsByClassName("close")[0];
+
+        // When the user clicks on <span> (x), close the modal
+        modal.onclick = function () {
+            modal.style.display = "none";
+        }
+    }
+
+</script>

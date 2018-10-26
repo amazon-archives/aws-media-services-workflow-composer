@@ -1,0 +1,369 @@
+.inputs {
+    text-transform: capitalize;
+}
+/* 
+pre {
+    background: #000 !important;
+    color: #fff !important;
+    margin-top: 2rem;
+} */
+
+input{
+    height:2.5em;
+    line-height:2.5em;
+    font-size:1em;
+    margin: auto;
+    margin-top: 2rem;
+    width: 50%;
+}
+
+
+.header {
+    background-color: #fff;
+}
+
+.header-thumbnail {
+    margin-bottom: 5px;
+    margin-top: 5px;
+}
+
+.center-header{
+    margin: auto;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    
+}
+
+
+.center-text{
+    margin: auto;
+    margin-top: 2rem;
+}
+
+body{
+    font-family: 'Nunito', sans-serif;
+    color: #384047;
+    background-color:#f9fafc;
+}
+
+.page-container{
+    margin:20px;
+}
+
+h1{
+    font-size: 2em;
+    margin: 30px 0;
+    text-align: center;
+}
+
+html {
+    font-family: sans-serif; 
+    -ms-text-size-adjust: 100%; 
+    -webkit-text-size-adjust: 100%; 
+}
+
+.thumbnail{
+    margin: 10px;
+}
+
+.thumbnails{
+    width:100%;
+}
+
+
+
+
+/* For thumbnail overlays */
+.img-container {
+    position: relative;
+    float: left;
+    width: 300px;
+  }
+  
+  .image {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  
+  .overlay {
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    right: 0;
+    /* background-color: #008CBA; */
+    background-color: #ff9900;
+    overflow: hidden;
+    width: 100%;
+    height:0;
+    transition: .5s ease;
+  }
+  
+  .img-container:hover .overlay {
+    bottom: 0;
+    height: 100%;
+  }
+  
+  .text {
+    white-space: nowrap; 
+    color: white;
+    font-size: 20px;
+    position: absolute;
+    overflow: hidden;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    -ms-transform: translate(-50%, -50%);
+  }
+  
+  /* Used from W3Schools. Shows how to make a modal image popup */
+  /* Style the Image Used to Trigger the Modal */
+
+#myImg:hover {opacity: 0.7;} */
+
+/* The Modal (background) */
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    padding-top: 100px; /* Location of the box */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0,0,0); /* Fallback color */
+
+    background-color: rgba(0,0,0,0.9); /* Black w/ opacity */
+}
+
+/* Modal Content (Image) */
+.modal-content {
+    margin: auto;
+    display: block;
+    width: 200%;
+    max-width: 100%;
+}
+
+/* Caption of Modal Image (Image Text) - Same Width as the Image */
+#caption {
+    margin: auto;
+    display: block;
+    width: 80%;
+    max-width: 700px;
+    text-align: center;
+    color: #ccc;
+    padding: 10px 0;
+    height: 150px;
+}
+
+/* Add Animation - Zoom in the Modal */
+.modal-content, #caption { 
+    -webkit-animation-name: zoom;
+    -webkit-animation-duration: 0.6s;
+    animation-name: zoom;
+    animation-duration: 0.6s;
+}
+
+@-webkit-keyframes zoom {
+    from {-webkit-transform:scale(0)} 
+    to {-webkit-transform:scale(1)}
+}
+
+@keyframes zoom {
+    from {transform:scale(0)} 
+    to {transform:scale(1)}
+}
+
+/* The Close Button */
+.close {
+    position: absolute;
+    top: 15px;
+    right: 35px;
+    color: #f1f1f1;
+    font-size: 40px;
+    font-weight: bold;
+    transition: 0.3s;
+}
+
+.close:hover,
+.close:focus {
+    color: #bbb;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+/* 100% Image Width on Smaller Screens */
+@media only screen and (max-width: 700px){
+    .modal-content {
+        width: 100%;
+    }
+}
+
+
+/* Edit mejs__container */
+.mejs__container{
+    margin:auto;
+    margin-top:2rem;
+    margin-bottom:2rem;
+}
+
+.custom-top-button{
+    margin-top: 32px;
+}
+
+/* Container  */
+
+
+
+.btn-xlarge {
+    padding: 18px 28px;
+    font-size: 22px;
+    line-height: normal;
+    -webkit-border-radius: 8px;
+    -moz-border-radius: 8px;
+    border-radius: 8px;
+}
+
+.hiddenRow {
+    padding: 0 !important;
+
+}
+
+.collapse-row.collapsed + tr {
+    display: none;
+}
+
+.container { 
+    max-width: 2500px;
+    margin-left: 20px;
+    padding-right:50px;
+}
+
+.card {
+    margin: 5px;
+    font-size: 14px;
+    font-family: sans-serif;
+}
+
+.col-3 {
+    padding-left: 0;
+    padding-right: 0;
+}
+
+.settings-card {
+    height: 780px;
+    overflow:scroll;
+    overflow-x:hidden;
+}
+
+
+/* Exit Button */
+.exit-button{
+    background-image:url(https://cdn0.iconfinder.com/data/icons/basic-ui-elements-plain/385/010_x-512.png);
+    height:100px;
+    width:100px;
+}
+
+.top-button{
+    font-size: 2rem;
+    margin-bottom: .5rem;
+    font-family: inherit;
+    font-weight: 500;
+    line-height: 1.2;
+    color: inherit;
+    margin-right: 10px;
+}
+
+/* Full screen modal */
+@import url(https://fonts.googleapis.com/css?family=Roboto+Condensed:300,400);
+
+.font-roboto {
+  font-family: 'roboto condensed';
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.modal {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  overflow: hidden;
+}
+
+.modal-dialog {
+  position: fixed;
+  margin: 0;
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  padding: 0;
+}
+
+.modal-content {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.modal-header {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 50px;
+  padding: 10px;
+  border: 0;
+}
+
+.modal-title {
+  font-weight: 300;
+  font-size: 2em;
+  color: #fff;
+  line-height: 30px;
+}
+
+.modal-body {
+  position: absolute;
+  top: 50px;
+  bottom: 60px;
+  width: 100%;
+  font-weight: 300;
+  overflow: auto;
+}
+
+.modal-footer {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 60px;
+  padding: 10px;
+  background: #f1f3f5;
+}
+
+::-webkit-scrollbar {
+  -webkit-appearance: none;
+  width: 10px;
+  background: #f1f3f5;
+  border-left: 1px solid darken(#f1f3f5, 10%);
+}
+
+::-webkit-scrollbar-thumb {
+  background: darken(#f1f3f5, 20%);
+}
+
+.center {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    width: 50%;
+}

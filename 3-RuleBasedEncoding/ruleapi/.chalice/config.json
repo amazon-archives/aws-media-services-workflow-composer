@@ -1,0 +1,16 @@
+{
+  "version": "2.0",
+  "app_name": "ruleapi",
+  "environment_variables": {
+    "RULEWEB_RULETABLE": "ruleweb-RulesTable",
+    "VODONAWS_DYNAMODBTABLE": "RE-vod",
+    "VODONAWS_SOURCE": "re-vod-source-i9nbhrubiuqn"
+    },
+  "stages": {
+    "dev": {
+      "api_gateway_stage": "api",
+      "autogen_policy": false,
+      "iam_policy_file": "dev-app-policy.json"
+    }
+  }
+}

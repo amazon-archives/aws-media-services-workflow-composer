@@ -1,0 +1,6 @@
+{
+    "hls": [720, 540, 360, 270],  
+    "srcVideo": "VANLIFE_FINAL_scte35_2tracks.m2ts", 
+    "FrameCapture": true,
+    "MetadataTestMessage": "Hello from the other side!" 
+}

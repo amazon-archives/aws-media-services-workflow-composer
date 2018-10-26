@@ -1,0 +1,6 @@
+{
+    "hls": [720, 540, 360, 270],  
+    "srcVideo": "winetasting_720p60.mp4", 
+    "FrameCapture": true,
+    "MetadataTestMessage": "Hello from the other side!" 
+}

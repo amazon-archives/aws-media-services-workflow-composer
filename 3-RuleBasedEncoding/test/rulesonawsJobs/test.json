@@ -1,0 +1,25 @@
+{
+    "hls": [1080, 720, 540, 360, 270], 
+    "dash": [1080, 720, 540, 360, 270], 
+    "mp4": [2160, 1080, 720], 
+    "srcVideo": "van_life.mp4", 
+    "FrameCapture": true, 
+    "ruleMappings": [
+      {
+        "ruleName": "Container_eq_MXF",
+        "template": "theTemplateForContainer_eq_MXF",
+        "testCreateTime": "2018-10-05 18:11.48",
+        "testResult": false
+      },
+      {
+        "ruleName": "Container_eq_MP4",
+        "template": "System-Ott_Hls_Ts_Avc_Aac",
+        "testCreateTime": "2018-10-05 18:11.48",
+        "testResult": true
+      },
+      {
+        "ruleName": "Container_eq_Prores",
+        "template": "theTemplateForContainer_eq_QuickTime"
+      }
+    ]
+  }

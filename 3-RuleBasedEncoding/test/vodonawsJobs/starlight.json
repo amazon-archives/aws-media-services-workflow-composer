@@ -1,0 +1,6 @@
+{
+    "hls": [720, 540, 360, 270],  
+    "srcVideo": "STARLIGHT_PARADE_SDR-FLAT_SDR_25000_CBR_2_pass_10bit_1.m2ts", 
+    "FrameCapture": true,
+    "MetadataTestMessage": "Hello from the other side!" 
+}

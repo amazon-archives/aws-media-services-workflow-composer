@@ -1,0 +1,6 @@
+**.zip
+sam.*
+deploy/*
+deploy/dist
+**dist
+**.pyc

@@ -1,0 +1,300 @@
+<html lang="en">
+
+<head>
+    <title>Video on Demand on AWS</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width">
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+        crossorigin="anonymous">
+    <link href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet" integrity="sha384-wvfXpqpZZVQGK6TAh5PVlGOfQNHSoD2xbE+QkPxCAFlNEevoEH3Sl0sibVcOQVnN"
+        crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.2.1.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js" integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh"
+        crossorigin="anonymous"></script>
+
+    <!-- Fonts from Google -->
+    <link href='https://fonts.googleapis.com/css?family=Nunito:400,300' rel='stylesheet' type='text/css'>
+
+    <link href="style.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/URI.js/1.19.1/URI.min.js" integrity="sha256-D3tK9Rf/fVqBf6YDM8Q9NCNf/6+F2NOKnYSXHcl0keU="
+        crossorigin="anonymous"></script>
+    <script data-main="js/app" src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.6/require.min.js" integrity="sha256-1fEPhSsRKlFKGfK3eO710tEweHh1fwokU5wFGDHO+vg="
+        crossorigin="anonymous"></script>
+
+</head>
+
+<body style="background-color: white">
+    <div class="page-container">
+        <div class="container">
+
+            <div class="row" style="padding-bottom:3rem; padding-top:2rem;">
+                <div class="col-12">
+                    <a href="index.html" class="btn btn-light top-button">Workflows</a>
+                    <a href="rules_list.html" class="btn btn-light top-button">Rules</a>
+
+                </div>
+                <!-- <div class="col-3">
+                    <a href="rules_list.html" class="btn btn-light top-button">Rules List Page</a>
+                        
+                </div> -->
+                <!-- <div class="col-6">
+                </div> -->
+            </div>
+
+            <div class="row" style="padding-bottom:20px;">
+                <!-- <div class="col-md-6">
+                    <div class="input-group">
+                        <input type="text" id="key-search-box" class="form-control" placeholder="Search Input Videos">
+                    </div>
+                </div> -->
+                <div class="col-md-3">
+                    <button type="button" onclick="location.reload();" class="btn btn-secondary btn-lg" style="margin-top: 24px;">Refresh
+                        Results</button>
+                </div>
+                <div class="col-md-3"> </div>
+                <div class="col-md-3"> </div>
+                <div class="col-md-3">
+                    <button type="button" data-toggle="modal" data-target="#createRuleModal" class="btn btn-secondary btn-lg"
+                        style="margin-top: 24px;">Create New Rule</button>
+                </div>
+            </div>
+            <div class="row" style="padding-top:20px;">
+                <table class="table table-condensed table-hover">
+                    <thead>
+                        <tr>
+                            <th scope="col">NAME</th>
+                            <th scope="col"></th>
+                            <th scope="col">CREATE TIME</th>
+                            <th scope="col"></th>
+                        </tr>
+                    </thead>
+                    <tbody id="loadHere">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Modal that contains an image if a thumbnail is clicked. -->
+        <div id="myModal" class="modal">
+            <span class="close">&times;</span>
+            <img class="modal-content" id="img01">
+            <div id="caption"></div>
+        </div>
+    </div>
+</body>
+
+
+<!-- Code for the full screen Create New Asset modal -->
+<!-- view modal -->
+
+<!-- view modal -->
+
+<!-- modal -->
+<div id="createRuleModal" class="modal animated bounceIn" tabindex="-1" role="dialog" aria-labelledby="myModalLabel"
+    aria-hidden="true">
+
+    <!-- dialog -->
+    <div class="modal-dialog">
+
+        <!-- content -->
+        <div class="modal-content">
+            <!-- footer -->
+            <div class="modal-header">
+                <div class="row" style="width:100%;">
+                    <div class="col-12">
+                        <button id="closeCreateRuleModal" class="btn btn-secondary float-right" data-dismiss="modal">
+                            Close
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- body -->
+            <div class="modal-body">
+                <h2>Create New Rule</h2>
+
+                <div class="row">
+                    <iframe id="myruleiframe" frameBorder="0" width="100%" height="100%" src="qb.html"></iframe>
+                </div>
+
+
+
+
+            </div>
+            <!-- body -->
+
+            <!-- footer -->
+            <!-- <div class="modal-footer">
+                <button class="btn btn-secondary" data-dismiss="modal">
+                    close
+                </button>
+                <button class="btn btn-default">
+                    Default
+                </button>
+                <button class="btn btn-primary">
+                    Primary
+                </button>
+            </div> -->
+            <!-- footer -->
+
+        </div>
+        <!-- content -->
+
+    </div>
+    <!-- dialog -->
+
+</div>
+<!-- modal -->
+
+</html>
+
+<script>
+
+    // Constant Variables.
+    var BASE_URL = window.location['href'].replace('index.html', '');
+
+    //document.onload = init();
+    $.ajaxSetup({
+        error: function (xhr, status, error) {
+            alert("An AJAX error occured: " + status + "\nError: " + error);
+        }
+    });
+
+    function init() {
+
+        require(['app/connections'], function (connections) {
+            if (null != connections.get_current()) {
+                console.log("current connection: " + connections.get_current());
+                update_main_table();
+
+                $('#closeCreateRuleModal').on('click', function () {
+                    $("#myruleiframe").attr('src', $('#myruleiframe').attr('src'));
+                    update_main_table();
+                })
+
+            }
+            else {
+                console.log("no current connection - set a connection to get going");
+            }
+            console.log("history:" + connections.get_history())
+
+        });
+    }
+
+    function add_rule_to_list() {
+        var rule_name = $("#rules-selector").find(":selected").text();
+        var html = '<div class="card"><div class="card-body">' + rule_name + '</div></div>'
+        $("#added-rules").append(html);
+    }
+
+    function zero_pad(string) {
+        var str = "" + string
+        var pad = "0000000"
+        var ans = pad.substring(0, pad.length - str.length) + str
+        return ans;
+    }
+
+
+    function attach_table_event_handlers() {
+        $('.collapse').on('show.bs.collapse', function () {
+
+
+            console.log($(this).data());
+
+            var data = $(this).data();
+
+            $('.collapse').collapse('hide');
+        });
+
+        $('.collapse').on('hide.bs.collapse', function () {
+            var data = $(this).data();
+
+        });
+    }
+
+
+    function update_main_table() {
+        var connections = require('app/connections');
+        var current_connection = connections.get_current()
+        var api_url = current_connection[0] + "/rules";
+        var api_key = current_connection[1];
+
+        getData(api_url, api_key)
+            .then(function (data) {
+                // this will help you see data structure while you develop the table
+                console.log(data);
+                // then create your table
+                var rows = data
+                // Making sure to zero out the table before refreshing it.
+                $('#loadHere').html("");
+
+                $('#main-table-view').html("");
+                for (var i = 0; i < rows.length; i++) {
+
+                    $('#loadHere').append(
+                        '<tr data-toggle="collapse" data-target=".' + rows[i]['name'] + ' "class="clickable">' +
+
+                        '<td>' + rows[i]['name'] + '</td>' +
+                        '<td>' + '</td>' +
+                        '<td>' + rows[i]['createTime'] + '</td>' +
+                        '<td>' + '</td>' +
+                        '</tr>' +
+                        '<tr>' +
+                        '<td class="hiddenRow" colspan="5"  >' +
+                        '<div class="row">' +
+                        '<div style="width:100%"' +
+                        ' class="collapse ' + rows[i]['name'] + '" >' +
+                        '<div class="container">' +
+                        '<div class="row">' +
+                        '<iframe frameBorder="0" width="100%" height="300px" src="qb_view_rule.html?' + rows[i]['name'] + '" ></iframe>' +
+                        '</div>' +
+                        '</div>' +
+                        '</div>' +
+                        '</div>' +
+                        '</td>' +
+                        '</tr>' +
+                        '</table>');
+                }
+
+                attach_table_event_handlers();
+
+            });
+    }
+
+    function postData(url = ``, api_key = "", data = {}) {
+        return fetch(url, {
+            method: "POST", // *GET, POST, PUT, DELETE, etc.
+            mode: "cors", // no-cors, cors, *same-origin
+            cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
+            headers: {
+                "Content-Type": "application/json; charset=utf-8",
+                'x-api-key': api_key
+            },
+            redirect: "follow", // manual, *follow, error
+            referrer: "no-referrer", // no-referrer, *client
+            body: JSON.stringify(data), // body data type must match "Content-Type" header
+        })
+            .then(response => response.json()); // parses response to JSON
+    }
+
+    function getData(url = ``, api_key = "", data = {}) {
+        return fetch(url, {
+            method: "GET", // *GET, POST, PUT, DELETE, etc.
+            mode: "cors", // no-cors, cors, *same-origin
+            cache: "no-cache", // *default, no-cache, reload, force-cache, only-if-cached
+            headers: {
+                "Content-Type": "application/json; charset=utf-8",
+                'x-api-key': api_key
+            },
+            redirect: "follow", // manual, *follow, error
+            referrer: "no-referrer", // no-referrer, *client
+        })
+            .then(response => response.json()); // parses response to JSON
+    }
+
+
+</script>

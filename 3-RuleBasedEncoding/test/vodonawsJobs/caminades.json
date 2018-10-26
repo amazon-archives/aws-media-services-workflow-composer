@@ -1,0 +1,6 @@
+{
+    "hls": [720, 540, 360, 270],  
+    "srcVideo": "02_gran_dillama_1080p.mp4", 
+    "FrameCapture": true,
+    "MetadataTestMessage": "Hello from the other side!" 
+}
