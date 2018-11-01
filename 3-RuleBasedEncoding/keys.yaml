@@ -1,0 +1,45 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description:
+  Rules Based Encoding Workshop - API Key resources for rules website 
+  
+Parameters:
+
+  ApiId:
+    Description: API ID to authenticate.
+    Type: String
+
+Resources:
+
+  APIUsagePlan:
+    Type: AWS::ApiGateway::UsagePlan
+    Properties:
+      ApiStages:
+        - ApiId: !Ref 'ApiId'
+          Stage: 'api' 
+      Description: Usage Plan for Rules API
+      UsagePlanName: !Sub "${AWS::StackName}-UsagePlan"
+
+  ApiKey: 
+    Type: AWS::ApiGateway::ApiKey
+    Properties: 
+      Name: !Sub "${AWS::StackName}-TestUserApiKey"
+      Description: "CloudFormation API Key V1"
+      Enabled: "true"
+      StageKeys: 
+        - RestApiId: 
+            Ref: 'ApiId'
+          StageName: "api"    
+
+  UsagePlanKey:
+    Type: AWS::ApiGateway::UsagePlanKey
+    Properties : 
+      KeyId: !Ref 'ApiKey'
+      KeyType: API_KEY
+      UsagePlanId: !Ref APIUsagePlan
+
+Outputs:
+  ApiKey:
+    Value: !Ref ApiKey    
+  

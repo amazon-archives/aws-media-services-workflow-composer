@@ -1,0 +1,99 @@
+---
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description:
+  Creates a static website and backend AWS services for the AWS Elemental Media Services VOD on AWS workshop
+
+Parameters:
+  vodstack:
+    Description: VOD on AWS stack to use
+    Type: String
+    Default: vod
+    
+Resources:
+
+  website:
+    Type: "AWS::CloudFormation::Stack"
+    Properties:
+      Parameters:
+        WebsiteBucketName:  !Sub "${AWS::StackName}-websitebucket"
+      TemplateURL: 
+        Fn::Sub: https://s3.amazonaws.com/rodeolabz-${AWS::Region}/rules/3-rulesbasedencoding/v3/ruleweb.yaml
+      TimeoutInMinutes: 60
+  api:
+    Type: "AWS::CloudFormation::Stack"
+    Properties:
+      Parameters:
+        DynamoDbTable: 
+          Fn::ImportValue: 
+            !Sub "${vodstack}:DynamoDBTable"
+        RulesTable: !GetAtt website.Outputs.RulesTableName
+        Source:
+          Fn::ImportValue: 
+            !Sub "${vodstack}:Source"
+      TemplateURL: 
+        Fn::Sub: https://s3.amazonaws.com/rodeolabz-${AWS::Region}/rules/3-rulesbasedencoding/v3/ruleapi_cfn.yaml
+      TimeoutInMinutes: 60
+  keys:
+    Type: "AWS::CloudFormation::Stack"
+    Properties:
+      Parameters:
+        ApiId:  !GetAtt api.Outputs.RestAPIId 
+      TemplateURL: 
+        Fn::Sub: https://s3.amazonaws.com/rodeolabz-${AWS::Region}/rules/3-rulesbasedencoding/v3/keys.yaml
+      TimeoutInMinutes: 60
+    
+Outputs:
+
+  APIHandlerArn: 
+    Description: API Handler Lambda
+    Value: !GetAtt api.Outputs.APIHandlerArn  
+        
+  APIHandlerName:
+    Description: API Handler ARN
+    Value: !GetAtt api.Outputs.APIHandlerName
+      
+  APIEndpointURL: 
+    Description: Rules and Workflow API endpoint
+    Value: !GetAtt api.Outputs.EndpointURL
+
+  APIKey: 
+    Description: API Key for testing
+    Value: !GetAtt keys.Outputs.ApiKey
+
+  RulesTableName:
+    Description: Dynamodb Table for Rules API
+    Value: !GetAtt website.Outputs.RulesTableName 
+
+  WebsiteURL:
+    Description: Workflow Monitoring page and Rule creation
+    Value: !GetAtt website.Outputs.WebsiteURL
+  
+  WorkflowDynamoDBTable:
+    Description: DynamoDB Table for VOD Workflow
+    Value: 
+      Fn::ImportValue: 
+        !Sub "${vodstack}:DynamoDBTable"
+  
+  WorkflowSource:
+    Description: Source Bucket
+    Value: 
+      Fn::ImportValue:
+        !Sub "${vodstack}:Source"
+
+  WorkflowDestination:
+    Description: Destination Bucket
+    Value: 
+      Fn::ImportValue:
+        !Sub "${vodstack}:Destination"
+
+  WorkflowCloudFront:
+    Description: CloudFront Domain Name
+    Value: 
+      Fn::ImportValue:
+        !Sub "${vodstack}:CloudFront"
+  
+  
+    
+    
+

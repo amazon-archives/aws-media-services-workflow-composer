@@ -1,0 +1,45 @@
+{
+  "resources": [
+    {
+      "name": "mediainfoRuleEngine_role",
+      "resource_type": "iam_role",
+      "role_arn": "arn:aws:iam::526662735483:role/ruleapi-dev-mediainfoRuleEngine",
+      "role_name": "ruleapi-dev-mediainfoRuleEngine"
+    },
+    {
+      "name": "mediainfoRuleEngine",
+      "resource_type": "lambda_function",
+      "lambda_arn": "arn:aws:lambda:us-west-2:526662735483:function:ruleapi-dev-mediainfoRuleEngine"
+    },
+    {
+      "name": "mediainfoRuleEngineProfiler_role",
+      "resource_type": "iam_role",
+      "role_arn": "arn:aws:iam::526662735483:role/ruleapi-dev-mediainfoRuleEngineProfiler",
+      "role_name": "ruleapi-dev-mediainfoRuleEngineProfiler"
+    },
+    {
+      "name": "mediainfoRuleEngineProfiler",
+      "resource_type": "lambda_function",
+      "lambda_arn": "arn:aws:lambda:us-west-2:526662735483:function:ruleapi-dev-mediainfoRuleEngineProfiler"
+    },
+    {
+      "name": "api_handler_role",
+      "resource_type": "iam_role",
+      "role_arn": "arn:aws:iam::526662735483:role/ruleapi-dev-api_handler",
+      "role_name": "ruleapi-dev-api_handler"
+    },
+    {
+      "name": "api_handler",
+      "resource_type": "lambda_function",
+      "lambda_arn": "arn:aws:lambda:us-west-2:526662735483:function:ruleapi-dev"
+    },
+    {
+      "name": "rest_api",
+      "resource_type": "rest_api",
+      "rest_api_id": "mqizx6vl98",
+      "rest_api_url": "https://mqizx6vl98.execute-api.us-west-2.amazonaws.com/api/"
+    }
+  ],
+  "schema_version": "2.0",
+  "backend": "api"
+}
