@@ -1,0 +1,394 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Outputs:
+  APIHandlerArn:
+    Value:
+      Fn::GetAtt:
+      - APIHandler
+      - Arn
+  APIHandlerName:
+    Value:
+      Ref: APIHandler
+  EndpointURL:
+    Value:
+      Fn::Sub: https://${RestAPI}.execute-api.${AWS::Region}.amazonaws.com/api/
+  RestAPIId:
+    Value:
+      Ref: RestAPI
+Resources:
+  APIHandler:
+    Properties:
+      CodeUri: s3://rodeolabz-us-west-2/rules/3-rulesbasedencoding/e7785478bc9bd4c75278434317d36201
+      Environment:
+        Variables:
+          APP_RULES_TABLE_NAME: ruleslab-RulesTable
+          VODONAWS_INDEX_NAME: srcBucket-startTime-index
+          VODONAWS_TABLE_NAME: vodaws45
+          VODONAWS_WATCHFOLDER_NAME: vodaws45-source-1xc27xd0jfvkc
+      Handler: app.app
+      MemorySize: 128
+      Role: arn:aws:iam::526662735483:role/ruleslab-APILambdaRole
+      Runtime: python3.6
+      Tags:
+        aws-chalice: version=1.6.0:stage=dev:app=ruleapi
+      Timeout: 60
+    Type: AWS::Serverless::Function
+  APIHandlerInvokePermission:
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName:
+        Ref: APIHandler
+      Principal: apigateway.amazonaws.com
+      SourceArn:
+        Fn::Sub:
+        - arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${RestAPIId}/*
+        - RestAPIId:
+            Ref: RestAPI
+    Type: AWS::Lambda::Permission
+  MediainfoRuleEngine:
+    Properties:
+      CodeUri: s3://rodeolabz-us-west-2/rules/3-rulesbasedencoding/e7785478bc9bd4c75278434317d36201
+      Environment:
+        Variables:
+          APP_RULES_TABLE_NAME: ruleslab-RulesTable
+          VODONAWS_INDEX_NAME: srcBucket-startTime-index
+          VODONAWS_TABLE_NAME: vodaws45
+          VODONAWS_WATCHFOLDER_NAME: vodaws45-source-1xc27xd0jfvkc
+      Handler: app.mediainfoRuleEngine
+      MemorySize: 128
+      Role: arn:aws:iam::526662735483:role/ruleslab-APILambdaRole
+      Runtime: python3.6
+      Tags:
+        aws-chalice: version=1.6.0:stage=dev:app=ruleapi
+      Timeout: 60
+    Type: AWS::Serverless::Function
+  MediainfoRuleEngineProfiler:
+    Properties:
+      CodeUri: s3://rodeolabz-us-west-2/rules/3-rulesbasedencoding/e7785478bc9bd4c75278434317d36201
+      Environment:
+        Variables:
+          APP_RULES_TABLE_NAME: ruleslab-RulesTable
+          VODONAWS_INDEX_NAME: srcBucket-startTime-index
+          VODONAWS_TABLE_NAME: vodaws45
+          VODONAWS_WATCHFOLDER_NAME: vodaws45-source-1xc27xd0jfvkc
+      Handler: app.mediainfoRuleEngineProfiler
+      MemorySize: 128
+      Role: arn:aws:iam::526662735483:role/ruleslab-APILambdaRole
+      Runtime: python3.6
+      Tags:
+        aws-chalice: version=1.6.0:stage=dev:app=ruleapi
+      Timeout: 60
+    Type: AWS::Serverless::Function
+  RestAPI:
+    Properties:
+      DefinitionBody:
+        definitions:
+          Empty:
+            title: Empty Schema
+            type: object
+        info:
+          title: ruleapi
+          version: '1.0'
+        paths:
+          /:
+            get:
+              consumes:
+              - application/json
+              produces:
+              - application/json
+              responses:
+                '200':
+                  description: 200 response
+                  schema:
+                    $ref: '#/definitions/Empty'
+              x-amazon-apigateway-integration:
+                contentHandling: CONVERT_TO_TEXT
+                httpMethod: POST
+                passthroughBehavior: when_no_match
+                responses:
+                  default:
+                    statusCode: '200'
+                type: aws_proxy
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${APIHandler.Arn}/invocations
+            options:
+              consumes:
+              - application/json
+              produces:
+              - application/json
+              responses:
+                '200':
+                  description: 200 response
+                  headers:
+                    Access-Control-Allow-Headers:
+                      type: string
+                    Access-Control-Allow-Methods:
+                      type: string
+                    Access-Control-Allow-Origin:
+                      type: string
+                  schema:
+                    $ref: '#/definitions/Empty'
+              x-amazon-apigateway-integration:
+                passthroughBehavior: when_no_match
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                responses:
+                  default:
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Headers: '''Authorization,Content-Type,X-Amz-Date,X-Amz-Security-Token,X-Api-Key'''
+                      method.response.header.Access-Control-Allow-Methods: '''GET,OPTIONS'''
+                      method.response.header.Access-Control-Allow-Origin: '''*'''
+                    statusCode: '200'
+                type: mock
+          /rules:
+            get:
+              consumes:
+              - application/json
+              produces:
+              - application/json
+              responses:
+                '200':
+                  description: 200 response
+                  schema:
+                    $ref: '#/definitions/Empty'
+              x-amazon-apigateway-integration:
+                contentHandling: CONVERT_TO_TEXT
+                httpMethod: POST
+                passthroughBehavior: when_no_match
+                responses:
+                  default:
+                    statusCode: '200'
+                type: aws_proxy
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${APIHandler.Arn}/invocations
+            options:
+              consumes:
+              - application/json
+              produces:
+              - application/json
+              responses:
+                '200':
+                  description: 200 response
+                  headers:
+                    Access-Control-Allow-Headers:
+                      type: string
+                    Access-Control-Allow-Methods:
+                      type: string
+                    Access-Control-Allow-Origin:
+                      type: string
+                  schema:
+                    $ref: '#/definitions/Empty'
+              x-amazon-apigateway-integration:
+                passthroughBehavior: when_no_match
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                responses:
+                  default:
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Headers: '''Authorization,Content-Type,X-Amz-Date,X-Amz-Security-Token,X-Api-Key'''
+                      method.response.header.Access-Control-Allow-Methods: '''GET,OPTIONS'''
+                      method.response.header.Access-Control-Allow-Origin: '''*'''
+                    statusCode: '200'
+                type: mock
+          /rules/variables:
+            get:
+              consumes:
+              - application/json
+              produces:
+              - application/json
+              responses:
+                '200':
+                  description: 200 response
+                  schema:
+                    $ref: '#/definitions/Empty'
+              x-amazon-apigateway-integration:
+                contentHandling: CONVERT_TO_TEXT
+                httpMethod: POST
+                passthroughBehavior: when_no_match
+                responses:
+                  default:
+                    statusCode: '200'
+                type: aws_proxy
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${APIHandler.Arn}/invocations
+            options:
+              consumes:
+              - application/json
+              produces:
+              - application/json
+              responses:
+                '200':
+                  description: 200 response
+                  headers:
+                    Access-Control-Allow-Headers:
+                      type: string
+                    Access-Control-Allow-Methods:
+                      type: string
+                    Access-Control-Allow-Origin:
+                      type: string
+                  schema:
+                    $ref: '#/definitions/Empty'
+              x-amazon-apigateway-integration:
+                passthroughBehavior: when_no_match
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                responses:
+                  default:
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Headers: '''Authorization,Content-Type,X-Amz-Date,X-Amz-Security-Token,X-Api-Key'''
+                      method.response.header.Access-Control-Allow-Methods: '''GET,OPTIONS'''
+                      method.response.header.Access-Control-Allow-Origin: '''*'''
+                    statusCode: '200'
+                type: mock
+          /rules/{rule_name}:
+            get:
+              consumes:
+              - application/json
+              parameters:
+              - in: path
+                name: rule_name
+                required: true
+                type: string
+              produces:
+              - application/json
+              responses:
+                '200':
+                  description: 200 response
+                  schema:
+                    $ref: '#/definitions/Empty'
+              x-amazon-apigateway-integration:
+                contentHandling: CONVERT_TO_TEXT
+                httpMethod: POST
+                passthroughBehavior: when_no_match
+                responses:
+                  default:
+                    statusCode: '200'
+                type: aws_proxy
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${APIHandler.Arn}/invocations
+            options:
+              consumes:
+              - application/json
+              produces:
+              - application/json
+              responses:
+                '200':
+                  description: 200 response
+                  headers:
+                    Access-Control-Allow-Headers:
+                      type: string
+                    Access-Control-Allow-Methods:
+                      type: string
+                    Access-Control-Allow-Origin:
+                      type: string
+                  schema:
+                    $ref: '#/definitions/Empty'
+              x-amazon-apigateway-integration:
+                passthroughBehavior: when_no_match
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                responses:
+                  default:
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Headers: '''Authorization,Content-Type,X-Amz-Date,X-Amz-Security-Token,X-Api-Key'''
+                      method.response.header.Access-Control-Allow-Methods: '''GET,POST,OPTIONS'''
+                      method.response.header.Access-Control-Allow-Origin: '''*'''
+                    statusCode: '200'
+                type: mock
+            post:
+              consumes:
+              - application/json
+              parameters:
+              - in: path
+                name: rule_name
+                required: true
+                type: string
+              produces:
+              - application/json
+              responses:
+                '200':
+                  description: 200 response
+                  schema:
+                    $ref: '#/definitions/Empty'
+              x-amazon-apigateway-integration:
+                contentHandling: CONVERT_TO_TEXT
+                httpMethod: POST
+                passthroughBehavior: when_no_match
+                responses:
+                  default:
+                    statusCode: '200'
+                type: aws_proxy
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${APIHandler.Arn}/invocations
+          /vodonaws:
+            get:
+              consumes:
+              - application/json
+              produces:
+              - application/json
+              responses:
+                '200':
+                  description: 200 response
+                  schema:
+                    $ref: '#/definitions/Empty'
+              x-amazon-apigateway-integration:
+                contentHandling: CONVERT_TO_TEXT
+                httpMethod: POST
+                passthroughBehavior: when_no_match
+                responses:
+                  default:
+                    statusCode: '200'
+                type: aws_proxy
+                uri:
+                  Fn::Sub: arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${APIHandler.Arn}/invocations
+            options:
+              consumes:
+              - application/json
+              produces:
+              - application/json
+              responses:
+                '200':
+                  description: 200 response
+                  headers:
+                    Access-Control-Allow-Headers:
+                      type: string
+                    Access-Control-Allow-Methods:
+                      type: string
+                    Access-Control-Allow-Origin:
+                      type: string
+                  schema:
+                    $ref: '#/definitions/Empty'
+              x-amazon-apigateway-integration:
+                passthroughBehavior: when_no_match
+                requestTemplates:
+                  application/json: '{"statusCode": 200}'
+                responses:
+                  default:
+                    responseParameters:
+                      method.response.header.Access-Control-Allow-Headers: '''Authorization,Content-Type,X-Amz-Date,X-Amz-Security-Token,X-Api-Key'''
+                      method.response.header.Access-Control-Allow-Methods: '''GET,OPTIONS'''
+                      method.response.header.Access-Control-Allow-Origin: '''*'''
+                    statusCode: '200'
+                type: mock
+        schemes:
+        - https
+        swagger: '2.0'
+        x-amazon-apigateway-binary-media-types:
+        - application/octet-stream
+        - application/x-tar
+        - application/zip
+        - audio/basic
+        - audio/ogg
+        - audio/mp4
+        - audio/mpeg
+        - audio/wav
+        - audio/webm
+        - image/png
+        - image/jpg
+        - image/jpeg
+        - image/gif
+        - video/ogg
+        - video/mpeg
+        - video/webm
+      StageName: api
+    Type: AWS::Serverless::Api
+Transform: AWS::Serverless-2016-10-31

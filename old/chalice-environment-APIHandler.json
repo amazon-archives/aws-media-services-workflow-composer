@@ -1,0 +1,13 @@
+{
+    "Variables": {
+      "RULEWEB_RULETABLE": {
+          "Ref":"RulesTable"
+      },
+      "VODONAWS_DYNAMODBTABLE": {
+          "Ref":"DynamoDbTable"
+      },
+      "VODONAWS_SOURCE": {
+          "Ref":"Source"
+      }
+  }
+}

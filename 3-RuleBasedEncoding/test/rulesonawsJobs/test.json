@@ -7,15 +7,11 @@
     "ruleMappings": [
       {
         "ruleName": "Container_eq_MXF",
-        "template": "theTemplateForContainer_eq_MXF",
-        "testCreateTime": "2018-10-05 18:11.48",
-        "testResult": false
+        "template": "theTemplateForContainer_eq_MXF"
       },
       {
         "ruleName": "Container_eq_MP4",
-        "template": "System-Ott_Hls_Ts_Avc_Aac",
-        "testCreateTime": "2018-10-05 18:11.48",
-        "testResult": true
+        "template": "System-Ott_Hls_Ts_Avc_Aac"
       },
       {
         "ruleName": "Container_eq_Prores",
