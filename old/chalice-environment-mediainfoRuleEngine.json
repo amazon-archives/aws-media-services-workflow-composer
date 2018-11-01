@@ -1,7 +1,0 @@
-{
-    "Variables": {
-      "RULEWEB_RULETABLE": {
-          "Ref":"RulesTable"
-      }
-  }
-}

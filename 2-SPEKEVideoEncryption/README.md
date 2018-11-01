@@ -1,1 +1,0 @@
-# Modifying Video On Demand on AWS MediaConvert jobs by adding SPEKE video encryption 

@@ -10,7 +10,7 @@ In this workshop, we will deploy the Video On Demand on AWS Solution and modify 
 
 In order to complete this workshop you'll need an AWS Account with access to create AWS MediaConvert, IAM, S3, Step Function, API Gateway and Lambda resources. The code and instructions in this workshop assume only one participant is using a given AWS account at a time. If you try sharing an account with another participant, you'll run into naming conflicts for certain resources. You can work around these by appending a unique suffix to the resources that fail to create due to conflicts, but the instructions do not provide details on the changes required to make this work.
 
-### Billing FIXME
+### Billing 
 
 MediaConvert jobs will incur charges based on the region you are using for the workshop at the rates described in the MediaConvert pricing page: https://aws.amazon.com/mediaconvert/pricing/ .
 
@@ -38,34 +38,21 @@ S3 and other resources you will launch as part of this workshop are eligible for
 
 We recommend you use the latest version of Chrome to complete this workshop.
 
-### Video player
-
-Videos can be played out in the browser if the browser supports them.  If you do not have a browser/platform combination that supports playing HLS and MP4 video then you can use:
-* **JW Player Stream Tester** https://developer.jwplayer.com/tools/stream-tester/ 
-
 ### Text / Code Editor
 
 You will need a local text editor for making minor updates to configuration files.
 
 ### Download the Workshop
 
-You will need to download this project to your computer in order to create the browser page, configure Video On Demand on AWS jobs and run CloudFormation templates.
+You don't need to download this project to your computer in order to complete the workshop.   
 
 # Workshop Modules
 
-- [**Video On Demand on AWS Solution**](1-VODonAWS/README.md) - This module guides the participant in deploying the Video On Demand on AWS Solution using AWS CloudFormation.
-
-
-
-- [**Modifying the VOD on AWS MediaConvert job settings: SPEKE encryption**](2-VideoEncryption/README.md) - This module guides the participant in making changes to the job settings used by the VOD on AWS Solution.
-
 - [**Modifying the VOD on AWS Step Functions: Rules-based Encoding**](3-RuleBasedEncoding/README.md) - This module guides the participant in modifying the Video On Demand on AWS workflow to use rules based on Mediainfo analysis on input videos to dynamically decide betweeen different encoding settings during workflow execution.
-
-- [**Working with VOD on AWS workflow outputs: Video Quality Control**](4-VideoQualityControl/README.md) - This module guides the participant in different kinds of information that they can "burn-in" to a video ouput. They will create a video with timecodes and watermarks burned in to the elemental video stream of one of the outputs of their job.
 
 # Start the Workshop
 
-Move forward to the first module [**Video On Demand on AWS Solution**](1-VODonAWS/README.md).
+Move forward to the first module [**Modifying the VOD on AWS Step Functions: Rules-based Encoding**](3-RuleBasedEncoding/README.md).
 
 # Credits
 
