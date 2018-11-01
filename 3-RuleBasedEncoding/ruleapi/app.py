@@ -43,7 +43,8 @@ class DecimalEncoder(json.JSONEncoder):
 
 # Setup boto3 resources
 dynamodb_resource = resource('dynamodb')
-S3 = boto3.client('s3', region_name='us-west-2')
+#S3 = boto3.client('s3', region_name='us-west-2')
+S3 = boto3.client('s3')
 
 # Defines names and types of variables that can be used in business-rules expressions and how their values
 # can be found in a Mediainfo type object.
@@ -432,6 +433,7 @@ def get_variables():
     try:
 
         rule_data = export_rule_data(MediainfoVariables, MediainfoActions)
+        
         logger.info("{}".format(json.dumps(
             rule_data, indent=4, sort_keys=True)))
 
@@ -531,6 +533,7 @@ def vod_list_assets():
     watchfolder_bucket = os.environ['VODONAWS_SOURCE']
     table = dynamodb_resource.Table(os.environ['VODONAWS_DYNAMODBTABLE'])
     index_name = 'srcBucket-startTime-index'
+    ret = {}
 
     logger.info('ENTER vod_list_assets()')
 
@@ -552,9 +555,11 @@ def vod_list_assets():
             items = None
         else:
             logger.info("got some items")
-            items = response['Items']
+            
+    ret['items'] = response['Items']
+    ret['region'] = os.environ['AWS_REGION']
 
-    return json.dumps(items, cls=DecimalEncoder)
+    return json.dumps(ret, cls=DecimalEncoder)
 
 
 # The view function above will return {"hello": "world"}

@@ -4,11 +4,17 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description:
   Rules Based Encoding Workshop - Dynamodb, S3 and Static website content 
   
+Parameters:
+
+  WebsiteBucketName:
+    Description: Name for website bucket.
+    Type: String
+
 Mappings:
   SourceCode:
     General:
-      CodeBucket: "rodeolabz-us-west-2"
-      KeyPrefix: "rules/3-rulesbasedencoding/v1"
+      CodeBucket: "rodeolabz"
+      KeyPrefix: "rules/3-rulesbasedencoding/v3"
 
 Resources:
 
@@ -31,7 +37,7 @@ Resources:
   WebsiteBucket:
     DeletionPolicy: Retain
     Properties:
-      #BucketName: !Ref BucketName
+      BucketName: !Ref WebsiteBucketName
       WebsiteConfiguration:
         IndexDocument: index.html
       CorsConfiguration:
@@ -60,7 +66,7 @@ Resources:
   WebsiteContent:
     Properties:
       ServiceToken: !GetAtt CopyS3ObjectsFunction.Arn
-      SourceBucket: !FindInMap ["SourceCode", "General", "CodeBucket"]
+      SourceBucket: !Join ["-", [!FindInMap ["SourceCode", "General", "CodeBucket"], Ref: "AWS::Region"]]
       SourcePrefix: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"],  "website/"]] 
       Bucket: !Ref WebsiteBucket
     Type: "Custom::S3Objects"
@@ -102,11 +108,11 @@ Resources:
                   - !Join 
                     - "" 
                     - - "arn:aws:s3:::"
-                      - !FindInMap ["SourceCode", "General", "CodeBucket"]
+                      - !Join ["-", [!FindInMap ["SourceCode", "General", "CodeBucket"], Ref: "AWS::Region"]]
                   - !Join 
                     - ""
                     - - "arn:aws:s3:::"
-                      - !FindInMap ["SourceCode", "General", "CodeBucket"]
+                      - !Join ["-", [!FindInMap ["SourceCode", "General", "CodeBucket"], Ref: "AWS::Region"]]
                       - "/"
                       - !FindInMap ["SourceCode", "General", "KeyPrefix"]
               -

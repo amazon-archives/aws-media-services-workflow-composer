@@ -44,82 +44,61 @@ The following Open Source packages are used to develop this customization.
 # Prerequisites
 
 1. Amazon Web Services account with root or Administrator permissions
-2. Video On Demand on AWS stack deployed in us-west-2 (Oregon).
+2. Video On Demand on AWS stack deployed in the same region you will complete the lab in.
 3. Google Chrome, Mozilla Firefox, or another current browser with JavaScript enabled.  Google Chrome is recommended.
 
 # Deploy the Lab Toolkit
 
-The lab toolkit is installed in your account using two CloudFormation templates.  We will examine the resources created and modify them as we proceed through the workshop.
+The lab toolkit is installed in your account using the Workshop.yaml CloudFormation template.  This template runs several nested Cloudformation templates that create the S3, API Gateway, IAM and Lambda resources needed to complete the workshop.  We will examine the resources created and modify them as we proceed through the tutorial.  
 
-During the installation of the different Cloudformation templates you may be prompted to acknowledge the creation of IAM resources.  Click on the check-boxes next to each entry.  Finally,  click the **Create** or **Create Change set** and **Execute** buttons where applicable.
+During the installation of the Cloudformation templates you may be prompted to acknowledge the creation of IAM resources.  Click on the check-boxes next to each entry.  Finally,  click the **Create** or **Create Change set** and **Execute** buttons where applicable.
 
 ![chagesets](../images/cfn-changesets.png)
 
-## Template 1: Static Website
+## Run the template
 
-A CloudFormation template is provided for this module in the file `ruleweb.yaml` to build the resources automatically.  We will refer to this stack as "the **ruleweb** stack" throughout this module.
+A CloudFormation template is provided for this module in the file `workshop.yaml` to build the resources automatically.  We will refer to this stack as "the **workshop** stack" throughout this module.
 
-Click **Launch Stack** to launch the template in the US West - Oregon (us-west-2) region in your account:
+Click **Launch Stack** to launch the template in your account in the region of your choice:
 
 
 Region| Launch
 ------|-----
 
 
-US West (Oregon) | [![Launch in us-west-2](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/images/cloudformation-launch-stack-button.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=ruleweb&templateURL=https://s3.amazonaws.com/rodeolabz-us-west-2/rules/3-rulesbasedencoding/v1/ruleweb.yaml)
+US West (Oregon) | [![Launch in us-west-2](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/images/cloudformation-launch-stack-button.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=ruleweb&templateURL=https://s3.amazonaws.com/rodeolabz-us-west-2/rules/3-rulesbasedencoding/v3/workshop.yaml)
 
-### Inputs
+### Parameters
 
-None.
+**vodstack** - the name of the Video on Demand Solution stack to use as a base for the rule based encoding workflow.
 
 ### Outputs
 
-The information about the resources created is in the **Outputs** tab of the stack.  
+The information about the resources created by this stack is in the **Outputs** tab of the stack.  For convienience, the outputs of the Video on Demand solution stack are also passed through and listed in the Outputs.  Save this page in a browser tab so you can refer to it later. 
 
 Save this page in a browser tab for future reference.  Or, copy and save the outputs to a file.
 
-![outputs](../images/cfn-ruleweb-outputs.png)
-
-
-* **WebsiteBucket** - S3 bucket that hosts static webpages for working with rules and viewing the outputs from the Video On Demand on AWS workflow.  
-* **WebsiteURL** - url for the Workflow webpage.
-* **RulesTableName** - name of the Dynamodb table used to store Mediainfo Rules.
-  
-## Template 2: API 
-
-A CloudFormation template to create a REST API to manage Mediainfo Rules is provided for this module in the file `ruleapi.yaml` to build the API resources automatically. We will refer to this stack as "the **ruleapi** stack" throughout this module.
-
-Click **Launch Stack** to launch the template in the US West - Oregon (us-west-2) region in your account:
- 
-
-Region| Launch
-------|-----
-
-US West (Oregon) | [![Launch in us-west-2](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/images/cloudformation-launch-stack-button.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=ruleapi&templateURL=https://s3.amazonaws.com/rodeolabz-us-west-2/rules/3-rulesbasedencoding/v1/ruleapi.yaml)
-
-### Inputs
-
-* **DynamoDbTable** - the **DynamoDBTable** output from the Video on Demand on AWS stack. 
-* **RulesTable** - the **RulestableName** ouput from the **ruleweb** stack		
-* **Source** - the **Source** output from the Video on Demand on AWS stack
-
-### Outputs
-
-The information about the resources created is in the **Outputs** tab of the stack.  Save this in a browser tab so you can use it later.
+FIXME ![outputs](../images/cfn-ruleweb-outputs.png)
 
 ![outputs](../images/cfn-ruleapi-outputs.png)
 
 * **APIHandlerArn** - ARN of the Lambda function that serves as the back-end for the /rule and /vodonaws APIs
 * **APIHandlerName** - Name of the Lambda function that serves as the back-end for the /rule and /vodonaws APIs
-* **EndpointURL** - HTTPS endpoint for the API
-
+* **APIEndpointURL** - HTTPS endpoint for the Rules and Workflow API endpoint	
+* **APIKey** - 	API Key for testing	the Rules and Workflow API
+* **WebsiteURL** - Workflow Monitoring page and Rule creation	webpages
+* **WorkflowCloudFront** - CloudFront Domain Name	for the Video on Demand on AWS solution
+* **WorkflowSource** - Source Bucket for the Video on Demand on AWS solution	
+* **WorkflowDestination** -	Destination Bucket for the Video on Demand on AWS solution	
+* **WorkflowDynamoDBTable** - DynamoDB Table for the Video on Demand on AWS solution	
+* **RulesTableName** - Dynamodb Table for Rules API
+  
 ### Other resources
 
-We will also use the following resources created by the ruleapi stack:
+We will also use the following resources created by the ruleapi nested stack:
 
 * **MediainfoRulesEngine** - standalone lambda that evaluates a list of Mediainfo Rules against an input mediainfo JSON object.
 * **MediainfoRulesEngineProfiler** - a replacement lambda for the exisisting Video on Demand on AWS profiler lambda.
-* **EndpointURL** - Endpoint for the API for managing stored rules.
 
 # Part 1: Change the Video on Demand on AWS S3 trigger to use input Metadata
 
@@ -143,7 +122,7 @@ We will take advantage of Metadata to allow end-users to pass in addtional infom
 
 Use the steps below to change the **S3 ObjectCreate (All)** event trigger on the **Source** bucket to only triger if the object created in the bucket has a suffix of "json".  We don't need to make any other changes to the stack since the workflow will automatically handle extracting metadata from .json files.
 
-1. Open the [S3 console](https://s3.console.aws.amazon.com/s3/home?region=us-west-2)
+1. Open the S3 console.
 2. Find the **Source** bucket created by the **vod-on-aws** stack and click on the link to open the detail page for the bucket. The bucket name will have a pattern like: `vod-on-aws-source-<unique-string>`.
 3. Navigate to the **Properties** tab and click on the **Events** tile in the **Advanced settings** panel at the bottom of the page.
 4. On the **Event** card select the radio button for the first **ObjectCreate (All)** event trigger and click on the **Edit** link.
@@ -170,28 +149,27 @@ Now let's create a Video on Demand on AWS workflow using the Metadata trigger.  
       "MetadataTestMessage": "Hello from the other side!" 
     }
     ```
-3. Open the [S3 console](https://s3.console.aws.amazon.com/s3/home?region=us-west-2) and click on the link for the **Source** bucket that was created by the Video on Demand on AWS workflow.
+3. Open the S3 console and click on the link for the **Source** bucket that was created by the Video on Demand on AWS workflow.
 4. Click on the **Upload** button and use the dialog box to locate and select the `testMetadata.json` input metadata file you just created.
 5. Click on the **Upload** button to start the upload.
-6. To verify the job triggered, open the [MediaConvert console](https://us-west-2.console.aws.amazon.com/mediaconvert/home?region=us-west-2#/jobs/list) in us-west-2 and make sure a job was started with the input `van_life.mp4`.
+6. To verify the job triggered, open the MediaConvert console and make sure a job was started with the input `van_life.mp4`.
 
 FIXME - show the metadata is carried through the job.  This should be in the the MediaConvert UserMetadata but it's not.
 
 # Part 2: Configure a serverless application to create and manage Mediainfo Rules
 
-The Lab Toolkit stacks (`ruleweb` and `ruleapi`) created webpages backed by API Gateway, Lambda and Dynamodb that will be used to:
+The Lab Toolkit stack (`workshop`) created webpages backed by API Gateway, Lambda and Dynamodb that will be used to:
 1) drive the Mediainfo Rule creation 
 2) to visualize the workflow data created by the Video on Demand on AWS solution.  
 
 In this section of the workshop, we will confgure and test these resources to work with the Video on Demand on AWS solution stack you deployed earlier.
 
-
 ![Rules and Workflows](../images/ServerlessWebApp.png)
 
 
-You will need to refer to the stack outputs from the Video On Demand on AWS solution, the **ruleapi** and the **ruleweb** stacks throughout this module. 
+You will need to refer to the stack outputs from the **workshop** stack throughout this module. 
 
-Resources for an API and website deployed as part of the toolkit stacks.  The API and Lambda were developed using [Chalice](https://github.com/aws/chalice), a microframework for writing serverless applications in python. It allows you to quickly create and deploy applications that use AWS Lambda and API Gateway.  For reference, the code for the API is [ruleapi/app.py](ruleapi/app.py).    
+ The API and Lambda resources created for the **workshop** stack were developed using [Chalice](https://github.com/aws/chalice), a microframework for writing serverless applications in python. It allows you to quickly create and deploy applications that use AWS Lambda and API Gateway.  For reference, the code for the API is [ruleapi/app.py](ruleapi/app.py).    
 
 The **/rules API Gateway API** creates, manages and executes user-defined rule expressions.  It has the following endpoints:
 
@@ -206,7 +184,7 @@ The **/vodonaws API Gateway API** has the following endpoints.
 
 ## Test the API in the browser
   
-1. Copy the **EndpointURL** output from the **ruleapi** stack into your browser and open the page.
+1. Copy the **APIEndpointURL** output from the **workshop** stack into your browser and open the page.
 2. You should see a "Hello World!" response.
   
    ![hello output](../images/api-hello.png)
@@ -224,7 +202,7 @@ The **/vodonaws API Gateway API** has the following endpoints.
  
 Being able to trigger the API independently can help with troubleshooting.  You can use API Gateway to unit test that the API is working properly before we configure an API key and use the API from our web application.  You can do this step now or move on to the next step to [Configure API Key Authentication](#Configure-API-Key-Authentication).
 
-1. Find the **RestAPI** resource created by the **ruleapi** stack and click on the link to open the AWS API Gateway console page.
+1. Find the **RestAPI** resource created by the **workshop** stack and click on the link to open the AWS API Gateway console page.
 
       ![API Gateway Resources](../images/api-RestAPI-resource.png)
 
@@ -242,29 +220,9 @@ Being able to trigger the API independently can help with troubleshooting.  You 
 
 So, our API works when we invoke it from the AWS console, but not directly from a web browser.  We need to create an API key so we can access it from our web application.
 
-## Configure API Key Authentication
+## Configure the VOD on AWS **Workflow** and **Rules** webpages
 
-The Mediainfo Rules Web Application is secure after installation because it requires an API key to access any of the REST API endpoints, and the CloudFormation template doesn't create API keys automatically. **By default, no access is possible until the following steps are performed.**
-
-1. Go to the API Gateway console
-2. In the left-hand tree view, click on Usage Plans and create a new usage plan. Give it a descriptive name, e.g. RulesUsagePlan
-3. Disable Throttling and Quota for now and considering activing one or both later depending on your environment and users
-4. Click on the newly created usage plan and then click on the **Add API Stage** button
-5. From the API dropdown select **ruleapi**
-6. From the Stage dropdown select **api**
-7. Click the checkbox to save the stage to the usage plan
-
-   ![Usage Plan API Stage](../images/api-usage-plan-stage.png)
-
-1. Click Next
-1. On the next page, click **Create API Key and add to Usage Plan** button
-1. Give the new key a name and description, and leave **Auto Generate** selected
-1. Click Save, and click Done on the API key page
-1. Select the API Keys tab
-1. Click on the API Key and click the **Show** option to see the actual API Key
-1. Copy the API Key
-  
-    ![api key](../images/api-key.png)
+The Mediainfo Rules Web Application is secure after installation because it requires an API key to access any of the REST API endpoints, and the CloudFormation template doesn't configure API keys for the web application automatically. **By default, no access is possible until the following steps are performed.**
 
 ### Multiple Users and Access Control
 
@@ -272,26 +230,34 @@ The Mediainfo Rules Web Application is secure after installation because it requ
 
 Note that if you want to share the UI with a colleague you can do so easily by providing the browser application URL, core endpoint URL and an API key. If an API key is compromised, or lost, create a new API key and delete the previous one. All users that require access can be sent the updated API key that they will have to update in the browser application under the Settings menu and Connections Settings menu item.
 
-## Configure the VOD on AWS **Workflow** and **Rules** webpages
-
 ### First Run (Important)
 
-Each time the Mediainfo Rules Web Application web application is launched, the browser's locally stored cookies are checked for any previous API connection information. If a previous connection is found, it is used by the browser automatically on the next launch.
+Each time the Mediainfo Rules web application is launched, the browser's locally stored cookies are checked for any previous API connection information. If a previous connection is found, it is used by the browser automatically on the next launch.
 
-1. Find the **WebsiteURL** output parameter from the **ruleweb** stack and copy the link to your browser to open the page.
+### Instructions
+
+1. Go to the API Gateway console
+2. Select the API Keys tab
+3. Click on the API Key named **RuleTestUserAPIKey**.  This API key was created by the **workshop** stack. Click the **Show** option to see the actual API Key
+4. Copy the API Key
+  
+    ![api key](../images/api-key.png)
+
+1. Find the **WebsiteURL** output parameter from the **workshop** stack and copy the link to your browser to open the page.
 2. Click on the **Setup** button at the top of the page.
-3. Enter the API endpoint you tested in the previous section in the **Endpoint URL** box (i.e. the **APIEndpoint** output from the **ruleapi** stack). 
+3. Enter the API endpoint you tested in the previous section in the **Endpoint URL** box (i.e. the **APIEndpointURL** output from the **workshop** stack). 
 4. Enter the API key you created in the **API Key** box.
 
     ![setup](../images/web-setup.png)
 
 5. Click on the **Save** button to save the settings.
+ 
 
-    
-
-### Test the **Workflow** web page
+## Test the **Workflow** web page
 
 The workflow webpage displays the output of the **GET /vodonaws** request.
+
+### Instructions
 
 1. After entering the API endpoint you should see a list of Video on Demand on AWS workflow instances you ran in previous modules of this lab.
 
@@ -301,7 +267,13 @@ The workflow webpage displays the output of the **GET /vodonaws** request.
 
     ![Workflow page detail screenshot](../images/web-workflow-details.png)
 
-### Test the **Rules** webpage and create some rules to use later
+## Test the **Rules** webpage and create some rules to use later
+
+The **Rules** webpage lists all the rules that have been created.  It displays the results of the **GET /rules** API request.
+
+The **Create Rule** button on the **Rules** webpage lets you create or update a rule to be managed by the web application.  It uses the form input as parameters to the **POST /rules/{rule-name}** API request.
+
+### Instructions
 
 1. Navigate to the **Rules** webpage by selecting the **Rules** button at the top of the **Workflow** webpage.  You can toggle back an forth between the pages using these buttons.  
 2. Click on **Create rule**.
@@ -389,7 +361,7 @@ We'll test the lambda by running it with the sample input below:
 }
 ```
 
-1. Open the AWS Lambda console in us-west-2 and search for the pattern ruleapi-mediainfoRuleEngine to find the lambda created by the ruleapi stack.  
+1. Open the AWS Lambda console and search for the pattern ruleapi-mediainfoRuleEngine to find the lambda created by the workshop stack.  
 2. Click on the link to go to the detail page for the lambda.
 3. In the Lambda console for **mediainfoRuleEngine**, select **Configure test event** from the toolbar.  
 4. In the dialog box, check **Create new test event**.
@@ -460,7 +432,7 @@ The decision making for which template to use for the Video on Demand on AWS wor
 
 We'll examine the inputs and outputs of this Lambda so we can update our **ruleapi-mediainfoRuleEngine** Lambda to use the same inputs and outputs.
 
-1. Open the [Step Functions console](https://us-west-2.console.aws.amazon.com/states/home?region=us-west-2#/statemachines) in us-west-2.
+1. Open the Step Functions AWS console.
 2. Click on the link for the `vod-on-aws-Process` step function.
 3. Click on a link for one of the successful **Executions** of the step function.
 4. From the Visual Workflow for the step function display on this page, you can see the Profiler step that triggers the profiler lambda.
@@ -548,7 +520,7 @@ Now we are ready to create our new profiler lambda.  We'll start with the **medi
 
 The resulting code is in **mediainfoRuleEngineProfiler**.  Let's do a walk-through of the code and then run a test:
 
-1. Open the AWS Lambda console in us-west-2 and search for the pattern ruleapi-mediainfoRuleEngineProfiler to find the lambda created by the ruleapi stack.  
+1. Open the AWS Lambda console and search for the pattern ruleapi-mediainfoRuleEngineProfiler to find the lambda created by the ruleapi nested stack.  
 2. Click on the link to go to the detail page for the lambda.  
 3. Scroll down to the **Function code** panel to examine the code.
 4. Find the function **mediainfoRuleEngineProfiler** in the file **app.py**.
@@ -564,7 +536,7 @@ The resulting code is in **mediainfoRuleEngineProfiler**.  Let's do a walk-throu
   * **from profiler:** Get the latest workflow data for this guid from Dynamodb
   * **from profiler:** Get mediainfo analysis results that were collected earlier in the workflow
   * **from profiler:** Set outputs that are based on mediainfo
-  * **from mediainfoRuleEngine:** Decide on a MediaConvert encoding template by running the mediainfo business-rules and selecting the first mapped template whose rule is true.  This implements IF-THEN-ELSE semantics.  The ELSE case is to use the solution default templates.  Test results for each rule executed are stored in the ruleMapping JSON elements of the event JSON object.
+  * **NEW CODE** Decide on a MediaConvert encoding template by running the mediainfo business-rules and selecting the first mapped template whose rule is true.  This implements IF-THEN-ELSE semantics.  The ELSE case is to use the solution default templates.  Test results for each rule executed are stored in the ruleMapping JSON elements of the event JSON object.
 
       ```python
       if ('ruleMappings' in event):
@@ -620,7 +592,7 @@ The resulting code is in **mediainfoRuleEngineProfiler**.  Let's do a walk-throu
 4. Select **Configure test event** from the lambda toolbar.  
 5. In the dialog box, check **Create new test event**.
 6. Enter `dummyGuid` as the **Event name**.
-7. Paste the JSON below into the the code box.
+7. Paste the JSON below into the the code box.  This is just a fake guid to start the workflow.  We will be using the test dynamodb table data to test the lambda rather than looking up a workflow in dynamodb.
    
    ```json
    {"guid":"notarealguid"}
@@ -692,8 +664,8 @@ The resulting code is in **mediainfoRuleEngineProfiler**.  Let's do a walk-throu
 
 Now that we know our new **mediainfoRuleEngineProfiler** lambda is working, let's test it in the Video on Demand on AWS workflow.  We'll replace the **Profiler** lambda in the **Process** step function with the new lambda. 
 
-1. Once again, open the [Step functions->State machines console for us-west-2 (Oregon)](https://us-west-2.console.aws.amazon.com/states/home?region=us-west-2#/statemachines).
-2. Find the `vod-on-aws-Process` step function and click on the link to go to the **Details** page.
+1. Once again, open the **Step functions->State machines** AWS console page.
+2. Find the `{VOD stack}-Process` step function and click on the link to go to the **Details** page.
 3. Click on the **Definitions** tab in the lower panel of the page.
 
     ![definition page](../images/process-state-machine-definition.png)
@@ -735,7 +707,7 @@ Now that we know our new **mediainfoRuleEngineProfiler** lambda is working, let'
     }
     ```
 
-2. Open the [S3 console](https://s3.console.aws.amazon.com/s3/home?region=us-west-2) and click on the link for the `vodaws-Source` bucket that was created by the Video on Demand on AWS workflow.
+2. Open the S3 console and click on the link for the `{VOD Stack}-source` bucket that was created by the Video on Demand on AWS workflow.
 3. Click on the **Upload** button and use the dialog box to locate and select the `test.json` input metadata file you just created.
 4. Click on the **Upload** button to start the upload.
 5. Go back to the details page for the **Process** Step Function.

@@ -710,7 +710,7 @@
         return obj ? obj : "Not Specified";
     }
 
-    function create_rules_paragraph(data) {
+    function create_rules_paragraph(data, region) {
 
         var rules_str = ""
         rules_str += '<h6 class="card-subtitle mb-2 text-muted">GUID</h6>' +
@@ -721,10 +721,11 @@
             '</div>';
 
 
+
         rules_str += '<p></p><h6 class="card-subtitle mb-2 text-muted">SELECTED TEMPLATE</h6>' +
             '<div class="card" >' +
             '<div class="card-body">' +
-            '<a href="https://us-west-2.console.aws.amazon.com/mediaconvert/home?region=us-west-2#/templates/details/' + data.jobTemplate + '" class="card-link" target="_blank">' + data.jobTemplate + '</a><p></p>' +
+            '<a href="https://'+region+'.console.aws.amazon.com/mediaconvert/home?region='+region+'#/templates/details/' + data.jobTemplate + '" class="card-link" target="_blank">' + data.jobTemplate + '</a><p></p>' +
             '</div>' +
             '</div>';
 
@@ -829,7 +830,8 @@
             .then(function (data_vod) {
                 console.log(data_vod);
 
-                data = data_vod;
+                data = data_vod['items'];
+                region = data_vod['region'];
                 console.log("here 1");
                 // this will help you see data structure while you develop the table
                 console.log(data);
@@ -838,7 +840,7 @@
 
                 $('#main-table-view').html("");
                 for (var i = 0; i < rows.length; i++) {
-                    var rules_paragraph = create_rules_paragraph(rows[i]);
+                    var rules_paragraph = create_rules_paragraph(rows[i], region);
 
                     let sourcevideo = rows[i]['srcBucket'] + "/" + rows[i]['srcVideo'];
 
@@ -939,7 +941,7 @@
                         '<p class="card-text"><b>Start Time:</b> ' + rows[i]['startTime'] + '</p>' +
                         '<p class="card-text"><b>' + 'End Time: </b>' + rows[i]['EndTime'] + '</p>' +
                         '<p class="card-text"><b>' + 'Job ID: </b>' +
-                        '<a href="https://us-west-2.console.aws.amazon.com/mediaconvert/home?region=us-west-2#/jobs/details/' + rows[i]['ecodeJobId'] + '" class="card-link" target="_blank">' + rows[i]['ecodeJobId'] + '</a>' +
+                        '<a href="https://'+region+'.console.aws.amazon.com/mediaconvert/home?region='+region+'#/jobs/details/' + rows[i]['ecodeJobId'] + '" class="card-link" target="_blank">' + rows[i]['ecodeJobId'] + '</a>' +
                         '</div>' +
                         '</div>' +
                         '<p></p><h6 class="card-subtitle mb-2 text-muted">MEDIACONVERT JOB USERMETADATA</h6>' +
