@@ -776,7 +776,7 @@
             '<h6 class="card-subtitle mb-2 text-muted">' + 'CLOUDFRONT CDN DISTRIBUTION' + '</h6>' +
             '<div class="card" >' +
             '<div class="card-body">' +
-            '<a href="https://' + cloudFront + '" class="card-link" target="_blank">' + cloudFront + '</a><p></p>' +
+            '<p class="card-text">' + cloudFront + '</p>' +
             '</div>' +
             '</div>';
 
@@ -802,11 +802,17 @@
                     output_group_playlist = "none";
                 }
 
+                s3_folder_path = output_group_s3.replace(/^s3?\:\/\//i, "");
+                console.log(s3_folder_path);
+                s3_folder_url = 'https://console.aws.amazon.com/s3/buckets/' + s3_folder_path + '?region=' + region + '&tab=overview';
+                //https://console.aws.amazon.com/s3/buckets/reinvent-vod1-destination-n09ku4j4vrqo/071a7831-4ed4-4e23-86ca-6f5f1f8605bf/hls/?region=eu-west-1&tab=overview
+                console.log(s3_folder_url);
+                
                 var output_card = '<p></p><h6 class="card-subtitle mb-2 text-muted">' + output_group_type + ' ' + output_group_custom_name + '</h6>' +
                     '<div class="card" >' +
                     '<div class="card-body">' +
                     '<h8 class="card-subtitle mb-2 text-muted">S3 OBJECTS</h8><p></p>' +
-                    '<p class="card-text">' + output_group_s3 + '</p>' +
+                    '<a href="' + s3_folder_url + '" class="card-link" target="_blank">' + output_group_s3  + '</a><p></p>' +
                     '<h8 class="card-subtitle mb-2 text-muted">PLAYLIST</h8><p></p>' +
                     '<a href="' + output_group_playlist + '" class="card-link" target="_blank">' + output_group_playlist + '</a><p></p>' +
                     '</div>' +

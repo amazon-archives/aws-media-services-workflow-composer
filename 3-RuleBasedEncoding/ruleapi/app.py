@@ -43,58 +43,11 @@ class DecimalEncoder(json.JSONEncoder):
 
 # Setup boto3 resources
 dynamodb_resource = resource('dynamodb')
-#S3 = boto3.client('s3', region_name='us-west-2')
 S3 = boto3.client('s3')
 
 # Defines names and types of variables that can be used in business-rules expressions and how their values
 # can be found in a Mediainfo type object.
 
-'''
-    @numeric_rule_variable
-    def container_count_of_tracks(self):
-        count = 0
-        logger.info(self.video)
-        if ('container' in self.video):
-            count += 1
-        if ('video' in self.video):
-            count += len(self.video['video'])
-        if ('audio' in self.video):
-            count += len(self.video['audio'])
-        if ('text' in self.video):
-            count += len(self.video['text'])
-        if ('menu' in self.video):
-            count += len(self.video['menu'])
-        return count
-
-    @numeric_rule_variable
-    def container_count_of_audio_streams(self):
-        count = 0
-        if ('audio' in self.video):
-            count += len(self.video['audio'])
-        return count
-
-    @numeric_rule_variable
-    def container_count_of_video_streams(self):
-        count = 0
-        if ('video' in self.video):
-            count += len(self.video['video'])
-        return count
-
-
-    @numeric_rule_variable
-    def container_count_of_menu_streams(self):
-        count = 0
-        if ('menu' in self.video):
-            count += len(self.video['menu'])
-        return count
-
-    @numeric_rule_variable
-    def container_count_of_text_streams(self):
-        count = 0
-        if ('text' in self.video):
-            count += len(self.video['text'])
-        return count
-'''
 
 class MediainfoVariables(BaseVariables):
     def __init__(self, video):
@@ -104,7 +57,7 @@ class MediainfoVariables(BaseVariables):
         # select a track to the UI.
         self.video0 = video.mediainfo['video'][0]
         self.container = video.mediainfo['container']
-    
+
     # container variables
     @select_rule_variable(options=["MPEG-4", "QuickTime", "Matroska", "AVI", "MPEG-PS", "MPEG-TS", "MXF", "GXF", "LXF", "WMV", "FLV", "Real"])
     def container_format(self):
@@ -202,80 +155,6 @@ class Mediainfo:
 app = Chalice(app_name='ruleapi')
 
 
-@app.route('/', cors=True)
-def index():
-    return {'hello': 'world'}
-
-
-@app.route('/ping', cors=True)
-def ping():
-    return {'ping': 'pong'}
-
-
-'''
- * @description set an endcoding profile based on the sorurce mediaInfo metadata). 
- * define the height/width for framecapture. define the encoding
- * job template to be used based on the profile (passing in the the event.jobTemplate
- * will overide the workflow defaults)
-'''
-
-
-@app.lambda_function(name="mediainfoRuleEngine")
-def mediainfoRuleEngine(event, context):
-
-    logger.info(json.dumps(event))
-
-    try:
-        rulesTable = dynamodb_resource.Table(os.environ['RULEWEB_RULETABLE'])
-        mediaInfo = event['mediainfo']
-        ruleMappings = event['ruleMappings']
-
-        video = Mediainfo(mediaInfo)
-
-        # Determine Encoding template by running the encoding rules and selecting
-        # the first mapped template whose rules is true.
-
-        for ruleMapping in event['ruleMappings']:
-
-            ruleMapping['testCreateTime'] = datetime.utcnow().strftime(
-                '%Y-%m-%d %H:%M.%S')
-
-            logger.info("rule: {}".format(json.dumps(
-                ruleMapping, indent=4, sort_keys=True)))
-
-            # retrieve the rule expression from the dyanamodb
-            response = rulesTable.get_item(
-                Key={'name': ruleMapping['ruleName']}, ConsistentRead=True)
-            businessRules = response['Item']['rules']
-
-            logger.info("running test {}".format(
-                json.dumps(businessRules, cls=DecimalEncoder)))
-
-            ruleMapping['testResult'] = run_all(rule_list=[businessRules],
-                                                defined_variables=MediainfoVariables(
-                                                    video),
-                                                defined_actions=MediainfoActions(
-                                                    video),
-                                                stop_on_first_trigger=True
-                                                )
-
-            logger.info("test result {}".format(json.dumps(
-                ruleMapping['testResult'], cls=DecimalEncoder)))
-
-            # Stop on the first rule that evaluates to True as we have found our mapping
-            if ruleMapping['testResult'] == True:
-                event['selectedRuleString'] = ruleMapping['ruleString']
-                break
-
-    except Exception as e:
-        logger.info("Exception {}".format(e))
-        raise ChaliceViewError("Exception '%s'" % e)
-
-    logger.info('Event: %s', json.dumps(event))
-
-    return event
-
-
 '''
 Test input to be used in place of Dynamodb row for unit testing
 '''
@@ -313,9 +192,6 @@ MEDIAINFO_BUSINESSRULES_PROFILER_TEST = {
 
 @app.lambda_function(name="mediainfoRuleEngineProfiler")
 def mediainfoRuleEngineProfiler(event, context):
-
-    message = 'Hello {}!'.format(json.dumps(event))
-    logger.info(message)
 
     vodonawsTable = dynamodb_resource.Table(
         os.environ['VODONAWS_DYNAMODBTABLE'])
@@ -424,7 +300,82 @@ def mediainfoRuleEngineProfiler(event, context):
     return event
 
 
+'''
+ * @description set an endcoding profile based on the sorurce mediaInfo metadata). 
+ * define the height/width for framecapture. define the encoding
+ * job template to be used based on the profile (passing in the the event.jobTemplate
+ * will overide the workflow defaults)
+'''
+
+
+@app.lambda_function(name="mediainfoRuleEngine")
+def mediainfoRuleEngine(event, context):
+
+    logger.info(json.dumps(event))
+
+    try:
+        rulesTable = dynamodb_resource.Table(os.environ['RULEWEB_RULETABLE'])
+        mediaInfo = event['mediainfo']
+        ruleMappings = event['ruleMappings']
+
+        video = Mediainfo(mediaInfo)
+
+        # Determine Encoding template by running the encoding rules and selecting
+        # the first mapped template whose rules is true.
+
+        for ruleMapping in event['ruleMappings']:
+
+            ruleMapping['testCreateTime'] = datetime.utcnow().strftime(
+                '%Y-%m-%d %H:%M.%S')
+
+            logger.info("rule: {}".format(json.dumps(
+                ruleMapping, indent=4, sort_keys=True)))
+
+            # retrieve the rule expression from the dyanamodb
+            response = rulesTable.get_item(
+                Key={'name': ruleMapping['ruleName']}, ConsistentRead=True)
+            businessRules = response['Item']['rules']
+
+            logger.info("running test {}".format(
+                json.dumps(businessRules, cls=DecimalEncoder)))
+
+            ruleMapping['testResult'] = run_all(rule_list=[businessRules],
+                                                defined_variables=MediainfoVariables(
+                                                    video),
+                                                defined_actions=MediainfoActions(
+                                                    video),
+                                                stop_on_first_trigger=True
+                                                )
+
+            logger.info("test result {}".format(json.dumps(
+                ruleMapping['testResult'], cls=DecimalEncoder)))
+
+            # Stop on the first rule that evaluates to True as we have found our mapping
+            if ruleMapping['testResult'] == True:
+                event['selectedRuleString'] = ruleMapping['ruleString']
+                break
+
+    except Exception as e:
+        logger.info("Exception {}".format(e))
+        raise ChaliceViewError("Exception '%s'" % e)
+
+    logger.info('Event: %s', json.dumps(event))
+
+    return event
+
+
+@app.route('/', cors=True)
+def index():
+    return {'hello': 'world'}
+
+
+@app.route('/ping', cors=True)
+def ping():
+    return {'ping': 'pong'}
+
 # Get a list of varaiable definitions that can be used to create rule expressions
+
+
 @app.route('/rules/variables', methods=['GET'], cors=True)
 def get_variables():
 
@@ -433,7 +384,7 @@ def get_variables():
     try:
 
         rule_data = export_rule_data(MediainfoVariables, MediainfoActions)
-        
+
         logger.info("{}".format(json.dumps(
             rule_data, indent=4, sort_keys=True)))
 
@@ -555,7 +506,7 @@ def vod_list_assets():
             items = None
         else:
             logger.info("got some items")
-            
+
     ret['items'] = response['Items']
     ret['region'] = os.environ['AWS_REGION']
 

@@ -8,7 +8,7 @@ Parameters:
   vodstack:
     Description: VOD on AWS stack to use
     Type: String
-    Default: vod
+    Default: reinvent-vod
     
 Resources:
 
@@ -64,6 +64,10 @@ Outputs:
   RulesTableName:
     Description: Dynamodb Table for Rules API
     Value: !GetAtt website.Outputs.RulesTableName 
+
+  WebsiteBucket:
+    Description: Bucket used for static website
+    Value: !GetAtt website.Outputs.WebsiteBucket
 
   WebsiteURL:
     Description: Workflow Monitoring page and Rule creation
