@@ -4,15 +4,15 @@
 
 If you prefer, skip this introduction and [jump to the start of the step-by-step instuctions.](#Deploy-the-Lab-Toolkit)
 
-The Video on Demand on AWS solution leverages AWS Step Functions, which breaks the workflow into individual steps, making it easier to customize or extend the architecture for your specific video-on-demand needs. For example, you can modify or replace the encoding steps to produce different content sets. You can also add steps to extend support for more complex workflows, including, for example, image processing for poster artwork or additional custom data to the metadata file that will then be stored in Amazon DynamoDB. 
+The [Video on Demand on AWS](https://aws.amazon.com/answers/media-entertainment/video-on-demand-on-aws/) (_VOD_) solution leverages AWS Step Functions, which breaks the workflow into individual steps, making it easier to customize or extend the architecture for your specific video-on-demand needs. For example, you can modify or replace the encoding steps to produce different content sets. You can also add steps to extend support for more complex workflows, including, for example, image processing for poster artwork or additional custom data to the metadata file that will then be stored in Amazon DynamoDB. 
 
-In this module, you will customize the VOD solution to use user-defined rules to automatically select which MediaConvert template will be used as the encoding settings for a specific input.  This change will enable end users who may have access to MediaConvert and the solution S3 bucket, but not the internals of the solution, to develop new video processing workflows without modifying the underlying code for the solution.
+In this module, you will customize the VOD solution to use user-defined rules to automatically select which MediaConvert job template will be used as the encoding settings for a given input.  This change will enable end users who may have access to MediaConvert and the solution S3 bucket, but not the internals of the solution, to develop new video processing workflows without modifying the underlying code for the solution.
 
 The Video on Demand solution already implements some hard-coded rules that we will replace with dynamic rules.  The existing rules checks the Mediainfo analysis results of the input video and decides on a job template that will avoid producing  _up-converted_ video outputs -  that is videos with a higher resolution than the input video.
 
 ## Changes to the Video on Demand solution end-user workflow
 
-When this module is complete the end user experience for using the Video on Demand on AWS solutions will be as follows: 
+When this module is complete the end user experience for using the Video on Demand solution will be as follows: 
 
 1. Create MediaConvert templates (e.g using the AWS Elemental MediaConvert console).  In our workshop, we will be using existing templates that were either generated from the lab toolkit or system templates provided by MediaConvert.  However, the new workflow supports any MediaConvert template.
 
@@ -57,9 +57,9 @@ The following Open Source packages are used to develop this customization.
 
 The lab toolkit is installed in your account using the workshop.yaml CloudFormation template.  This template runs several nested Cloudformation templates that create the S3, API Gateway, IAM and Lambda resources needed to complete the workshop.  We will examine the resources created and modify them as we proceed through the tutorial.  
 
-## Instructions
+We will refer to this stack as "the **reinvent-rules** stack" throughout this module.
 
-A CloudFormation template is provided for this module in the file `workshop.yaml` to build the resources automatically.  We will refer to this stack as "the **reinvent-rules** stack" throughout this module.
+## Instructions  
 
 1. Click **Launch Stack** to launch the template in your account in the region of your choice.
 
@@ -240,8 +240,7 @@ An API key was created in the reinvent-rules toolkit stack.
 8. Enter the API key you copied in the **API Key** box.
 9. Enter the API endpoint you tested in the previous section in the **Endpoint URL** box (i.e. the **APIEndpointURL** output from the **reinvent-rules** stack). 
 
-
-![setup](../images/web-setup.png)
+    ![setup](../images/web-setup.png)
 
 10. Click on the **Save** button to save the settings.
  
@@ -280,14 +279,15 @@ The **Create Rule** button on the **Rules** webpage lets you create or update a 
    
    ![Test Rules](../images/TestRules.png)
 
-# Part 3: Test the MediainfoRulesEngineProfiler lambda function
-
+# Part 3: The new MediainfoRulesEngineProfiler lambda function
 
 Earlier in this workshop we changed the trigger for the VOD solution to use metadata JSON files so we can pass in Mediainfo Rule Mappings that can be used to select encoding settings based on the attributes of the video.  
 
-We have one more change to the VOD solution so it can use the Mediainfo Rule Mappings.  We need to replace he hard-coded, static rules in the Process Step Function to execute the rules specified in the input metadata.
+We have one more change to the VOD solution so it can use the Mediainfo Rule Mappings.  We need to replace he hard-coded, static rules in the Process Step Function to execute the rules specified in the input metadata ruleMappings using the Python business-rules package.  
 
 ![changes](../images/vodonaws-changes.png)
+
+To understand this change we will do a quick overview of the existing **reinvent-vod-process** lambda function and the **reinvent-rules-MediainfoRulesEngineProfiler** lambda function.  More detailed code walkthoughs and testing can be found in [Appendix 1: Code Walktroughs](#Appendix-1:-Code-Walktroughs) below.
 
 ## Locate the Process Step Function and the Profiler Lambda function
 
@@ -317,11 +317,183 @@ We'll examine the inputs and outputs of this Lambda.  The new lambda needs to to
 
 9. Click on the lambda function link in the **Resource** section of the **Step details (Profiler)** panel to open the console page for the **reinvent-vod-profiler** lambda.
      
-## Profilier lambda walk-through
+## Profiler lambda overview
 
-Let's take a look at the code for the profiler lambda to understand what our new lambda will need to do.
+The profiler lambda does the following:
 
-The first thing to notice is that this is Node.js! The **mediainfoRuleEngine** lambda is written in Python, so we won't be copying code back and forth.  The good news is that since we are using the function as a service model, we can have lambdas in any combination of programming languages we want.  In this case, we want to take advantage of the open source business-rules python package, so we choose Python for our new lambda and reimplement the parts of the **Profiler** lambda that we need to match its interface to the VOD solution.
+* Get the latest workflow data from DynamoDB and copy it in to the _event_ output JSON object.  
+* Retrieve the Mediainfo analysis from the workflow data and set the outputs that come directly from Mediainfo.
+* Decide what MediaConvert Job Template to use based on the resolution of the input video (Height x Width).  **This is the key piece of code we need to replace with our dynamic rules execution from the mediainfoRulesEngine lambda**.
+* Return results in the event object.  The results include the name of the MediaConvert job template to use to convert the video.
+
+For a more detailed walk-through see the Appendix [Profiler lambda](#Profiler-lambda) below.
+
+## MediainfoRulesEngineProfiler lambda overview
+
+The MediainfoRulesEngineProfiler lambda is our replacement lambda for the profiler lambda.  It executes the Mediainfo Rules the user specifies and selects a mapped MediaConvert job template based on the results.  
+
+The new lambda starts with the logic from the existing profiler lambda.  If no template is found using the ruleMappings, it will fall back to selecting a template using the existing method.
+
+The ruleMappings input is specified by the user in the JSON metadata file that is used to trigger the workflow.   It can be accessed by our lambda from the workflow information stored in Dynamodb. ruleMappings have following format:
+
+```json
+"ruleMappings": [
+    {
+        "ruleName": "Rule1",
+        "template": "Template1"
+    },
+    {
+        "ruleName": "Rule2",
+        "template": "Template2"
+    },
+    ...
+    {
+        "ruleName": "RuleN",
+        "template": "TemplateN"
+    }
+]
+```
+
+Each ruleName is the key for the store business-rules JSON object that was created using the Rules web page.  Each template is the key for the stored MediaConvert job template create using the AWS Elemental MediaConvert service.
+
+The lambda Performs the following steps.  Steps that different from the existing profiler lambda are labelled with the keyword NEW:
+
+  * **NEW: Rules API Dynamodb table is mapped from the Lambda Enviornment**
+  * Get the latest workflow data for this guid from Dynamodb
+  * Retrieve the Mediainfo analysis from the workflow data and set the outputs that come directly from Mediainfo.
+  * **NEW: Retrieve the ruleMappings from the workflow data.**
+  * **NEW: Decide on a MediaConvert job template** 
+  
+    For each ruleMapping passed in by the end-user:
+    * Look up the rule JSON in the **reinvent-vod-RulesTable**.
+    * Evaluate the rule using the Python **business-rules** package.
+    * If the rule expression evaluates to TRUE, select the mapped template and break.
+  
+    This implements IF-THEN-ELSE semantics.  The ELSE case falls back to using the the solution default templates based on the video resolution.  Test results for each rule executed are stored in the ruleMapping JSON elements of the event JSON object. 
+
+  * Decide what _default_ MediaConvert Job Template to use based on the resolution of the input video (Height x Width)
+  * NEW Select the default template if no template was selected from the business-rules execution step.
+  * Return results in the event object. The results include the name of the MediaConvert job template to use to convert the video.
+
+The resulting code is in **mediainfoRuleEngineProfiler**.  
+
+For a more detailed code walkthough see Appendix  [MediainfoRulesEngineProfiler lambda](MediainfoRulesEngineProfiler-lambda) below.
+
+# Part 4: Replace static rules with dynamic rules in the Video on Demand on AWS solution 
+
+In this section we will replace the **profiler** lambda in **Process** step function with the **mediainfoRuleEngineProfiler** lambda.
+
+### Instructions
+
+1. Open the AWS Lambda console and search for the pattern `reinvent-rules-api` to find the lambdas created by the ruleapi nested stack.  The mediainfoRuleEngineProfiler lambda should be in the list.  The name may be truncated if the function was created from a nested stack:
+
+    ![find the lambda](../images/lambda-find-mediainfoRulesProfiler.png)
+
+
+2. Click on the link to go to the detail page for the lambda. 
+3. Scroll down to the **Function code** panel to examine the code.
+4. Find the function **mediainfoRuleEngineProfiler** in the file **app.py**.
+5. Copy the ARN for the lambda from the top of the page.
+6. Once again, open the **Step functions->State machines** AWS console page.
+7. Find the `reinvent-vod-process` step function and click on the link to go to the **Details** page.
+8. Click on the **Definition** tab in the lower panel of the page.
+
+    ![definition page](../images/process-state-machine-definition.png)
+
+9. Click the **Edit** button at the top of the page.
+10. To replace the Profiler lambda in the **Process** state machine, we will simply copy the ARN for our new lambda and use it as the new value for the **States['Profiler']['Resource']** JSON element.
+
+    ![replace profiler image](../images/step-replace-profiler.png)
+
+11. Click **Save**
+12. Save this page in a broswer tab to use in the test step below.
+
+## Test the end to end workflow
+
+1.  On your computer, create a file called `test.json` and copy the following JSON into the the file:
+
+    ```json
+    {
+      "srcVideo": "van_life.mp4", 
+      "FrameCapture": true, 
+      "ruleMappings": [
+        {
+          "ruleName": "Container_eq_MXF",
+          "template": "theTemplateForContainer_eq_MXF"
+        },
+        {
+          "ruleName": "Container_eq_MP4",
+          "template": "System-Ott_Hls_Ts_Avc_Aac"
+        },
+        {
+          "ruleName": "Container_eq_QuickTime",
+          "template": "theTemplateForContainer_eq_Prores"
+        }
+      ]
+    }
+    ```
+
+2. Open the S3 console and click on the link for the `reinvent-vod-source` bucket that was created by the Video on Demand on AWS workflow.
+3. Click on the **Upload** button and use the dialog box to locate and select the `test.json` input metadata file you just created.
+4. Click on the **Upload** button to start the upload.
+5. Go back to the details page for the **Process** Step Function.
+6. Find the most recent invocation of the function in the **Execution** panel and click on the link to see the execution details.
+7. The **Execution status** should be **Succeeded**
+8. Check the **Outputs** in the **Step details** panel to make sure there are ruleMappings and testResults in the output.
+9. Finally, open the **Workflow** web page.  Find the most recent workflow run and click on the row to show the workflow details.
+10. You should see results of you rule execution for your test job.
+
+    ![Success](../images/success.png)
+
+11. You will notice that the result of the rule execution is listed in the details of the workflow instance.
+    
+## More things to try
+
+### Test the workflow with different inputs
+
+To show that different templates are chosen for different inputs, replace the **srcVideo** value in the previous step with different input videos. Try:
+
+* `starlight_2160p59.m2ts` - no matching rule so the default, resolution based decison making will be used to select a template.
+* `silksintrees_MPEG2.mxf` - the first ruleMapping is selected.
+
+### Test the workflow with different rules
+
+Add another rule to using the **Rules** webpage.
+
+### Add a new MediaConvert template and use it in a ruleMapping
+
+# Conclusion
+
+You have successfully completed the Rules Based Encoding workshop!  At this point, you should have a feel for how to modify the internals of the Video on Demand on AWS solution as well as  how the VOD solution might work as part of a larger application.
+
+What you accomplishd:
+
+1. Changed the Video on Demand on AWS solution user interface from Video to Metadata inputs.
+2. Deployed and configured a serverless web application for creating named expressions, called **_Mediainfo Rules_**, that can be evaluated against facts from Mediainfo metadata for a video.
+3. Deployed and inspected a **_MediainfoRulesEngineProfiler_** lambda function that uses Mediainfo metadata for a specific video and evaluates a list of Mediainfo Rules to select a MediaConvert job template to use to process the video.
+4. Changed the Video on Demand on AWS solution to use the MediainfoRulesEngineProfiler lambda in place of the existing logic to select a job template.
+   
+Thank you for completing the workshop!
+
+# Cleanup
+
+Delete the S3 bucket created by the `reinvent-rules` stack.
+
+1. Find the value of the **WebsiteBucket** Output from the **reinvent-rules** stack and copy it.
+2. Open the S3 console and search for the WebsiteBucket value.
+3. Click on the bucket icon and delete the bucket.
+
+Delete the `reinvent-rules` cloudformation stack.
+
+1. Open the cloudformation console.
+2. Select the reinvent-rules stack radio button.
+3. Select **Delete stack** from the **Actions** drop down.
+
+# Appendix: Code Walkthroughs
+
+## profiler lambda
+
+The first thing to notice is that this is Node.js! The **mediainfoRuleEngineProfiler** lambda is written in Python, so we won't be copying code back and forth.  The good news is that since we are using the function as a service model, we can have lambdas in any combination of programming languages we want.  In this case, we want to take advantage of the open source business-rules python package, so we choose Python for our new lambda and reimplement the parts of the **Profiler** lambda that we need to match its interface to the VOD solution.
 
 * The first part of the lambda gets the latest workflow data from DynamoDB and copy it in to the _event_ output JSON object.  
 * Retrieve the Mediainfo analysis from the workflow data and set the outputs that come directly from Mediainfo.
@@ -372,10 +544,9 @@ The first thing to notice is that this is Node.js! The **mediainfoRuleEngine** l
 
 * Return our results in the event object.
 
+## MediainfoRulesEngineProfiler lambda
 
-## Create a new lambda from the Profiler lambda 
-
-Now we are ready to create our new profiler lambda.  We'll start with **profiler** lambda and replace the template decision making code with rule evaluation using the business-rules engine package.  
+We'll start with **profiler** lambda and replace the template decision making code with rule evaluation using the Python business-rules engine package.  
 
 The resulting code is in **mediainfoRuleEngineProfiler**.  Let's do a walk-through of the code and then run a test:
 
@@ -461,7 +632,7 @@ The resulting code is in **mediainfoRuleEngineProfiler**.  Let's do a walk-throu
 
 8. Click **Create**
 9.  Click on the **Test** button.
-10. The Lambda **Execution result** should be successful and the output in the **Execution result** panel should look like this:
+10. The Lambda **Execution result** should be successful and the output in the **Execution result** panel should look like this.  Note that the output **ruleMappings** element now contain a **testCreateTime** for when the test was run and a **testResult** with the result of the test execution for this input:
 
     ```json
     {
@@ -521,117 +692,7 @@ The resulting code is in **mediainfoRuleEngineProfiler**.  Let's do a walk-throu
 12. Save the Lambda
 13. Scroll to the top of the page and copy the ARN for the lambda.
 
-# Part 4: Replace static rules with dynamic rules in the Video on Demand on AWS solution 
-
-## Replace the **profiler** lambda in **Process** step function with the **mediainfoRuleEngineProfiler** lambda.
-
-Now that we know our new **mediainfoRuleEngineProfiler** lambda is working, let's test it in the Video on Demand on AWS workflow.  We'll replace the **Profiler** lambda in the **Process** step function with the new lambda. 
-
-1. Once again, open the **Step functions->State machines** AWS console page.
-2. Find the `reinvent-vod-process` step function and click on the link to go to the **Details** page.
-3. Click on the **Definition** tab in the lower panel of the page.
-
-    ![definition page](../images/process-state-machine-definition.png)
-
-4. Click the **Edit** button at the top of the page.
-5. To replace the Profiler lambda in the **Process** state machine, we will simply copy the ARN for our new lambda and use it as the new value for the **States['Profiler']['Resource']** JSON element.
-6. Click **Save**
-7. Save this page in a broswer tab to use in the test step below.
-
-## Test the end to end workflow
-
-1.  On your computer, create a file called `test.json` and copy the following JSON into the the file:
-
-    ```json
-    {
-      "srcVideo": "van_life.mp4", 
-      "FrameCapture": true, 
-      "ruleMappings": [
-        {
-          "ruleName": "Container_eq_MXF",
-          "template": "theTemplateForContainer_eq_MXF"
-        },
-        {
-          "ruleName": "Container_eq_MP4",
-          "template": "System-Ott_Hls_Ts_Avc_Aac"
-        },
-        {
-          "ruleName": "Container_eq_QuickTime",
-          "template": "theTemplateForContainer_eq_Prores"
-        }
-      ]
-    }
-    ```
-
-2. Open the S3 console and click on the link for the `reinvent-vod-source` bucket that was created by the Video on Demand on AWS workflow.
-3. Click on the **Upload** button and use the dialog box to locate and select the `test.json` input metadata file you just created.
-4. Click on the **Upload** button to start the upload.
-5. Go back to the details page for the **Process** Step Function.
-6. Find the most recent invocation of the function in the **Execution** panel and click on the link to see the execution details.
-7. The **Execution status** should be **Succeeded**
-8. Check the **Outputs** in the **Step details** panel to make sure there are ruleMappings and testResults in the output.
-9. Finally, open the **Workflow** web page.  Find the most recent workflow run and click on the row to show the workflow details.
-10. You should see results of you rule execution for your test job.
-
-    ![Success](../images/success.png)
-
-11. You will notice that the result of the rule execution is listed in the details of the workflow instance.
-    
-## Test the workflow with different inputs
-
-To show that different templates are chosen for different inputs, replace the **srcVideo** value in the previous step with different input videos. Try:
-
-* `starlight_2160p59.m2ts`
-
-## Test the workflow with different rules
-
-Add another rule to 
-
-# Cleanup resources created by this lab
-
-# Conclusion
-
-You have successfully completed the Rules Based Encoding workshop!  At this point you should have a feel for how to modify the internals of the VOD solution as well as  how the VOD solution might work as part of a larger application.
-
-# Cleanup
-
-Delete the S3 bucket created by the `reinvent-rules` stack.
-
-1. Find the value of the **WebsiteBucket** Output from the **reinvent-rules** stack and copy it.
-2. Open the S3 console and search for the WebsiteBucket value.
-3. Click on the bucket icon and delete the bucket.
-
-Delete the `reinvent-rules` cloudformation stack.
-
-1. Open the cloudformation console.
-2. Select the reinvent-rules stack radio button.
-3. Select **Delete stack** from the **Actions** drop down.
-
-# Deeper Dives
-
-## (Optional) Test the API in API Gateway
- 
-Being able to trigger the API independently can help with troubleshooting.  You can use API Gateway to unit test that the API is working properly before we configure an API key and use the API from our web application.  You can do this step now or move on to the next step to [Configure API Key Authentication](#Configure-API-Key-Authentication).
-
-1. Find the **RestAPI** resource created by the **reinvent-rules** stack and click on the link to open the AWS API Gateway console page.
-
-      ![API Gateway Resources](../images/api-RestAPI-resource.png)
-
-2. Click on the **ruleapi** card to open the ruleapi detail page.
-3. Click on the /vodonaws GET method to open the **Method Execution** page.
-4. Click on the **Test** button (has lightening bolt) to open the **Method Test** page.
-5. Leave the settings as is and click on the **Test** button at the bottom of the page.  You should see a response with **Status 200**.  The JSON request body should contain a list of VOD solution workflows.
-
-    ![vodonaws test](../images/api-gateway-test-vodonaws.png)
-
-6. Repeat these steps for the /rules API.  You should see a response with **Status 200**.  The JSON request body should contain an empty list since we havn't created any rules yet. 
-
-    ![rules test](../images/api-gateway-test-rules.png)
-
-
-So, our API works when we invoke it from the AWS console, but not directly from a web browser.  We need to create an API key so we can access it from our web application.
-
-# Setting up the python development environment
+# Appendix: Setting up the python development environment
 
 Create a python 3.6 virtual environment:
 
@@ -647,30 +708,32 @@ Install requirements:
 FIXME
 ```
 
-
-
-# Next steps
+# Appendix: Next steps
 
 Feel free to enter a pull request if you want to add to this project!
 
-add track selection.  The current implementation is limited:
-* assumes only one video track in the input 
-* only tests container and video analysis
+Some desired features:
+
+* **track selection**  
+
+    The current implementation is limited:
+    * assumes only one video track in the input 
+    * only tests container and video analysis
 
 
-* add other types of analysis/rules such as ffmpeg for black detection, silence detection, ffprobe. 
+* **add other types of analysis/rules** such as ffmpeg for black detection, silence detection, ffprobe. 
 
-Replace Python business-rules package with IOT Rules.  There's always more than one way to do something!  I think we could use IOT Rules for this workflow by generating an SQL expression for each rule and creating a Dynamodb trigger rules with the following structure, name each track then write each rule as a column output of the select clause :
+* **Replace Python business-rules package with IOT Rules.**  There's always more than one way to do something!  I think we could use IOT Rules for this workflow by generating an SQL expression for each rule and creating a Dynamodb trigger rules with the following structure, name each track then write each rule as a column output of the select clause :
 
-```
-SELECT 
-    mediainfo.container AS container, mediainfo.video[0] AS video0, ..., 
-    mediainfo.audio[0] AS audio0, ...,
-    mediainfo.text[0] AS text0, ...,
-    (rule 1 expression) AS rule1result, ..., 
-    (rule N expression) AS ruleNresult
-FROM
-    mediainfo
-```
+    ```
+    SELECT 
+        mediainfo.container AS container, mediainfo.video[0] AS video0, ..., 
+        mediainfo.audio[0] AS audio0, ...,
+        mediainfo.text[0] AS text0, ...,
+        (rule 1 expression) AS rule1result, ..., 
+        (rule N expression) AS ruleNresult
+    FROM
+        mediainfo
+    ```
 
-The rule would insert the result of each expression into a dynamodb table.  A dynamodb trigger could be used to apply the rule mappings to select a template and continue the workflow.
+    The rule would insert the result of each expression into a dynamodb table.  A dynamodb trigger could be used to apply the rule mappings to select a template and continue the workflow.

@@ -1,0 +1,5 @@
+{
+    "srcVideo": "silksintrees_MPEG2.mxf", 
+    "FrameCapture": true,
+    "MetadataTestMessage": "Hello from the other side!" 
+}
