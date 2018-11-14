@@ -61,7 +61,7 @@ We will refer to this stack as "the **reinvent-rules** stack" throughout this mo
 
 ## Instructions  
 
-1. Click **Launch Stack** to launch the template in your account in the region of your choice.
+1. Click **Launch Stack** to launch the template in your account in the region of your choice.  The stacks should take a few minutes to deploy.
 
 
 Region | Launch
@@ -78,7 +78,6 @@ US West 2 (Oregon) | [![Launch in us-west-2](http://docs.aws.amazon.com/AWSCloud
 5. During the installation of the Cloudformation templates you may be prompted to acknowledge the creation of IAM resources.  Click on the check-boxes next to each entry.  Finally,  click the **Create** or **Create Change set** and **Execute** buttons where applicable.
 
     ![chagesets](../images/cfn-changesets.png)
-
 
 ## Outputs
 
@@ -107,7 +106,7 @@ We will also use the following resources created by the ruleapi nested stack:
 
 # Part 1: Change the Video on Demand on AWS S3 trigger to use input Metadata
 
-![metadata watchfolder](../images/metadata-watchfolder.png)
+![metadata watchfolder](../images/metadata-watchfolder-new.png)
 
 The Video on Demand on AWS solution supports two types of S3 workflow triggers:
 
@@ -132,14 +131,14 @@ Use the steps below to change the **S3 ObjectCreate (All)** event trigger on the
 1. Open the S3 console.
 2. Find the **Source** bucket created by the **reinvent-vod** stack and click on the link to open the detail page for the bucket. The bucket name will have a pattern like: `reinvent-vod-source-<unique-string>`.
 3. Navigate to the **Properties** tab and click on the **Events** tile in the **Advanced settings** panel at the bottom of the page.
-4. On the **Event** card select the radio button for the first **ObjectCreate (All)** event trigger and click on the **Edit** link.
-5. Replace the existing value in the **Suffix** box with  `json` and click **Save** to update the trigger.
+4. On the **Event** card select the radio button for the first **ObjectCreate (All)** event trigger.  This event should have the value `.mpg` in the filter column.  Click on the **Edit** link.
+5. Replace the existing value in the **Suffix** box with  `.json` and click **Save** to update the trigger.
    
-      ![json trigger](../images/s3-json-event-trigger.png)
+      ![json trigger](../images/s3-json-event-trigger-new.png)
 
 6. On the **Event** card, select the radio button for each non-json  **ObjectCreate (All)** event trigger and click on the **Delete** button.  The only remaining trigger should be the JSON trigger. 
 
-    ![s3 events](../images/s3-events.png)
+    ![s3 events](../images/s3-events-new.png)
 
 
 ## Test the metadata trigger
@@ -158,13 +157,12 @@ Now let's create a Video on Demand on AWS workflow using the Metadata trigger.  
 3. Open the S3 console and click on the link for the **Source** bucket that was created by the Video on Demand on AWS workflow.
 4. Click on the **Upload** button and use the dialog box to locate and select the `testMetadata.json` input metadata file you just created.
 5. Click on the **Upload** button to start the upload.
-6. To verify the job triggered, open the MediaConvert console and make sure a job was started with the input **van_life.mp4**.
-7. To verify the VOD solution workflow is triggered, open the AWS Step Functions console and find the **reinvent-vod-process** step function.  Click on the link to open the detail page.
-8. On the **Executions** panel, find the most recent invocation of the state machine and click the link to go to the details of that invocation.  
-9. The **Execution status** should be **Succeeded**.
-10. Now, click on the **Profiler** step in the **Visual Workflow** card.  This will load the input, output and exception information for that step into the **Step details (Profiler)** card.  
-11. Expand the twisty for the **Step details (Profiler)** **Outputs** section.
-12. Locate the "MetadataTestMessage" key value pair we passed in with the VOD workflow input metadata. 
+6. To verify the VOD solution workflow is triggered, open the AWS Step Functions console and find the **reinvent-vod-process** step function.  Click on the link to open the detail page.
+7. On the **Executions** panel, find the most recent invocation of the state machine and click the link to go to the details of that invocation.  
+8. The **Execution status** should be **Succeeded**.
+9.  Now, click on the **Profiler** step in the **Visual Workflow** card.  This will load the input, output and exception information for that step into the **Step details (Profiler)** card.  
+10. Expand the twisty for the **Step details (Profiler)** **Outputs** section.
+11. Locate the "MetadataTestMessage" key value pair we passed in with the VOD workflow input metadata. 
 
     ![Step Function Helllo](../images/step-hello.png)
 
@@ -178,7 +176,7 @@ The Lab Toolkit stack (`reinvent-rules`) created webpages backed by API Gateway,
 
 In this section of the workshop, we will confgure and test these resources to work with the Video on Demand on AWS solution stack you deployed earlier.
 
-![Rules and Workflows](../images/ServerlessWebApp.png)
+![Rules and Workflows](../images/ServerlessWebApp-new.png)
 
 
 You will need to refer to the stack outputs from the **reinvent-rules** stack throughout this module. 
@@ -285,7 +283,7 @@ Earlier in this workshop we changed the trigger for the VOD solution to use meta
 
 We have one more change to the VOD solution so it can use the Mediainfo Rule Mappings.  We need to replace he hard-coded, static rules in the Process Step Function to execute the rules specified in the input metadata ruleMappings using the Python business-rules package.  
 
-![changes](../images/vodonaws-changes.png)
+![changes](../images/vodonaws-changes-new.png)
 
 To understand this change we will do a quick overview of the existing **reinvent-vod-process** lambda function and the **reinvent-rules-MediainfoRulesEngineProfiler** lambda function.  More detailed code walkthoughs and testing can be found in [Appendix 1: Code Walktroughs](#Appendix-1:-Code-Walktroughs) below.
 
@@ -391,35 +389,33 @@ In this section we will replace the **profiler** lambda in **Process** step func
 
 
 2. Click on the link to go to the detail page for the lambda. 
-3. Scroll down to the **Function code** panel to examine the code.
-4. Find the function **mediainfoRuleEngineProfiler** in the file **app.py**.
-5. Copy the ARN for the lambda from the top of the page.
-6. Once again, open the **Step functions->State machines** AWS console page.
-7. Find the `reinvent-vod-process` step function and click on the link to go to the **Details** page.
-8. Click on the **Definition** tab in the lower panel of the page.
+3. Copy the ARN for the lambda from the top of the page.
+4. Once again, open the **Step functions->State machines** AWS console page.
+5. Find the `reinvent-vod-process` step function and click on the link to go to the **Details** page.
+6. Click on the **Definition** tab in the lower panel of the page.
 
     ![definition page](../images/process-state-machine-definition.png)
 
-9. Click the **Edit** button at the top of the page.
-10. To replace the Profiler lambda in the **Process** state machine, we will simply copy the ARN for our new lambda and use it as the new value for the **States['Profiler']['Resource']** JSON element.
+7. Click the **Edit** button at the top of the page.
+8.  To replace the Profiler lambda in the **Process** state machine, we will simply copy the ARN for our new lambda and use it as the new value for the **States['Profiler']['Resource']** JSON element.
 
-    ![replace profiler image](../images/step-replace-profiler.png)
+    ![replace profiler image](../images/step-replace-profiler-new.png)
 
-11. Click **Save**
-12. Save this page in a broswer tab to use in the test step below.
+9.  Click **Save**
+10. Save this page in a broswer tab to use in the test step below.
 
 ## Test the end to end workflow
 
-1.  On your computer, create a file called `test.json` and copy the following JSON into the the file:
+1.  On your computer, create a file called `test.json` and copy the following JSON into the the file.  If you named your VOD solution stack something other than **reinvent-vod**, you will need to replace the prefix with your stack name:
 
     ```json
     {
-      "srcVideo": "van_life.mp4", 
-      "FrameCapture": true, 
+      "srcVideo": "van_life.mp4",
+      "FrameCapture": true,
       "ruleMappings": [
         {
           "ruleName": "Container_eq_MXF",
-          "template": "theTemplateForContainer_eq_MXF"
+          "template": "reinvent-vod_Ott_720p_Avc_Aac_16x9"
         },
         {
           "ruleName": "Container_eq_MP4",
@@ -427,7 +423,7 @@ In this section we will replace the **profiler** lambda in **Process** step func
         },
         {
           "ruleName": "Container_eq_QuickTime",
-          "template": "theTemplateForContainer_eq_Prores"
+          "template": "reinvent-vod_Ott_1080p_Avc_Aac_16x9"
         }
       ]
     }
