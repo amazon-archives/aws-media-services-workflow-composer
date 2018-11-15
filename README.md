@@ -24,15 +24,14 @@ Create flexible, intelligent file-based video workflows on AWS using dynamic rul
 
 ### Sample VOD workflow using the Video on Demand on AWS Solution
 
-* A sample workflow using the [Video on Demand on AWS](https://aws.amazon.com/answers/media-entertainment/video-on-demand-on-aws/) solution is provided.  The workflow takes ruleMappings as input to the VOD on AWS solution metadata trigger and uses the rule execution lambda function to decide which MediaConvert template (encoding settings) should be used to process a video input as part of an unattended workflow.  ruleMappings have the following format:
+* A sample workflow using the [Video on Demand on AWS](https://aws.amazon.com/answers/media-entertainment/video-on-demand-on-aws/) solution is provided.  The workflow takes a list of _ruleMappings_ as input to the VOD on AWS solution metadata trigger and uses the rule execution lambda function to decide which MediaConvert template (encoding settings) should be used to process a video input as part of an unattended workflow.  ruleMappings have the following format:
 
     ```json
     ruleMappings [
         {
-            'ruleName' : 'ruleBuilderRuleName',
+            'ruleName' : 'RuleBuilderRuleName',
             'template' : 'MediaConvertJobTemplateName'
-        },
-        ...
+        }
     ]
     ```
 
