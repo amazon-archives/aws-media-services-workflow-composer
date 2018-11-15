@@ -90,7 +90,7 @@
             <table class="table table-condensed table-hover">
                 <thead>
                     <tr>
-                        <th scope="col">INPUT THUMBNAIL</th>
+                        <th scope="col">THUMBNAIL</th>
                         <th scope="col">ID</th>
                         <th scope="col">INPUT VIDEO</th>
                         <th scope="col">SELECTED TEMPLATE</th>
@@ -529,15 +529,6 @@
         return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
     }
 
-    // get an input thumbnail to use for the list of created workflows
-    function get_first_thumbnail(source_video) {
-        var url_bucket = "http://burkleaa-files.s3.amazonaws.com/vodaws-thumbnails/";
-        var base_name = source_video.split(".")[0].replace("_hevc", "");
-        var base_url = url_bucket + base_name + '/';
-
-        return base_url + base_name + '_thumb.' + zero_pad(1) + '.jpg';
-    }
-
     // get a representative thumbnail from output thumbnails
     // load the thumbnail carosel with VOD on AWS output thumbnails
     function get_first_thumbnail_cdn(source_video, guid, cdn_url) {
@@ -854,8 +845,7 @@
 
                     console.log(rows[i]['srcVideo'])
 
-                    var srcUri = rows[i]['srcBucket'] + "/" + rows[i]['srcVideo']
-                    var src_video_thumbnail = get_first_thumbnail(rows[i]['srcVideo']);
+                    var srcUri = rows[i]['srcBucket'] + "/" + rows[i]['srcVideo'];
                     var src_video_thumbnail = get_first_thumbnail_cdn(rows[i]['srcVideo'], rows[i]['guid'], rows[i]['hlsUrl']);
                     var src_video_thumbnail = ('thumbNailUrl' in rows[i]) ? rows[i]['thumbNailUrl'][0] : "";
                     var mediainfo = "srcMediainfo" in rows[i] ? rows[i]['srcMediainfo'] : "{}";

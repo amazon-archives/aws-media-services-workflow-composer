@@ -1,63 +1,51 @@
-# Video On Demand on AWS Workshop
+# Media Services VOD Workflow Builder
 
-This workshop guides participants in customizing the [Video On Demand on AWS Solution](https://aws.amazon.com/answers/media-entertainment/video-on-demand-on-aws/).  AWS offers this solution as a well-architected starting point for automating file-based video workflows on AWS.  The stack  ingests source videos, processes the videos for playback on a wide range of devices, and stores the transcoded media files for on-demand delivery to end users through Amazon CloudFront. 
+## Overview
 
-In this workshop, we will deploy the Video On Demand on AWS Solution and modify it by adding functionality at different integration points.
+Create flexible, intelligent file-based video workflows on AWS using dynamic rules.
 
-# Workshop Requirements
+* API for creating rules that can be run against videos to automate encoding decsions and perform quality control for file-based video delivery workflows.  
+* A rule execution engine for evaluating dynamic rules within video workflows.
+* A serverless application for creating rules
+* A sample workflow using dynamic rules.
+* A tutorial for how to build the sample application.
 
-### AWS Account
+### Rule Builder
 
-In order to complete this workshop you'll need an AWS Account with access to create AWS MediaConvert, IAM, S3, Step Function, API Gateway and Lambda resources. The code and instructions in this workshop assume only one participant is using a given AWS account at a time. If you try sharing an account with another participant, you'll run into naming conflicts for certain resources. You can work around these by appending a unique suffix to the resources that fail to create due to conflicts, but the instructions do not provide details on the changes required to make this work.
+* Create named rule expressions using a form based user interface.  
+* The sample uses [Mediainfo](https://mediaarea.net/en/MediaInfo) video analysis as the domain for creating expressions.  
+* The form is implemented using the [JQuery QueryBuilder](https://querybuilder.js.org/index.html) JavaScript project.
 
-### Billing 
+    ![sample rule screenshot](images/app-sample-rule.png)
 
-MediaConvert jobs will incur charges based on the region you are using for the workshop at the rates described in the MediaConvert pricing page: https://aws.amazon.com/mediaconvert/pricing/ .
+### Rule Execution
 
-**Each MediaConvert job from this lab produces outputs with the following characteristics:**
+* Rules are executed as a part of a file-based video processing workflow using the [business-rules](https://github.com/venmo/business-rules) Python package in an AWS Lambda.
 
-ABR stack 
-* 3 outputs: 1280x720, 960x540, 680x360
+### Sample VOD workflow using the Video on Demand on AWS Solution
 
-MP4
-* 1 output: 1280x720
+* A sample workflow using the [Video on Demand on AWS](https://aws.amazon.com/answers/media-entertainment/video-on-demand-on-aws/) solution is provided.  The workflow takes ruleMappings as input to the VOD on AWS solution metadata trigger and uses the rule execution lambda function to decide which MediaConvert template (encoding settings) should be used to process a video input as part of an unattended workflow.  ruleMappings have the following format:
 
-Thumbnails
-* 1 output: 1280x720
+    ```json
+    ruleMappings [
+        {
+            'ruleName' : 'ruleBuilderRuleName',
+            'template' : 'MediaConvertJobTemplateName'
+        },
+        ...
+    ]
+    ```
 
-All ouputs:
-* MPEG-2 Codec
-* 30 - 60 FPS
-* 1.5 - 2 minutes long depending on which job in the lab you are running.
+* A webpage is included to monitor the sample workflow
 
-**Other lab resources**
-
-S3 and other resources you will launch as part of this workshop are eligible for the AWS free tier if your account is less than 12 months old. See the [AWS Free Tier page](https://aws.amazon.com/free/) for more details.
-
-### Browser
-
-We recommend you use the latest version of Chrome to complete this workshop.
-
-### Text / Code Editor
-
-You will need a local text editor for making minor updates to configuration files.
-
-### Download the Workshop
-
-You don't need to download this project to your computer in order to complete the workshop.   
-
-# Workshop Modules
-
-- [**Modifying the VOD on AWS Step Functions: Rules-based Encoding**](3-RuleBasedEncoding/README.md) - This module guides the participant in modifying the Video On Demand on AWS workflow to use rules based on Mediainfo analysis on input videos to dynamically decide betweeen different encoding settings during workflow execution.
-
-# Start the Workshop
-
-Move forward to the first module [**Modifying the VOD on AWS Step Functions: Rules-based Encoding**](3-RuleBasedEncoding/README.md).
-
-# Credits
-
-
-# Contributors
+    ![Rule execution screenshot](images/app-rule-execution.png)
 
 
 
+### REST API
+
+All browser actions are performed through an authenticated and SSL encrypted REST API hosted in the cloud. The API can be used by other tools to manage rules, execute rules and monitor the sample workflow.
+
+## Navigate
+
+Navigate to [README](README.md) | [Workshop](RuleBasedEncoding/README.md) 

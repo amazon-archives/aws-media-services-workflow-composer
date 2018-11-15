@@ -1,30 +1,30 @@
-# Customizing the Video On Demand on AWS workflow to use dynamic rules
+# Customizing the Video On Demand on AWS solution with dynamic encoding rules
 
 ## Introduction
 
-If you prefer, skip this introduction and [jump to the start of the step-by-step instuctions.](#Deploy-the-Lab-Toolkit)
+If you prefer, skip this introduction and [jump to the start of the step-by-step instructions.](#Deploy-the-Lab-Toolkit)
 
-The [Video on Demand on AWS](https://aws.amazon.com/answers/media-entertainment/video-on-demand-on-aws/) (_VOD_) solution leverages AWS Step Functions, which breaks the workflow into individual steps, making it easier to customize or extend the architecture for your specific video-on-demand needs. For example, you can modify or replace the encoding steps to produce different content sets. You can also add steps to extend support for more complex workflows, including, for example, image processing for poster artwork or additional custom data to the metadata file that will then be stored in Amazon DynamoDB. 
+In this tutorial, you will build additional intelligence into the [Video on Demand on AWS](https://aws.amazon.com/answers/media-entertainment/video-on-demand-on-aws/) (_VOD_) solution by adding dynamic, user-defined rules to make automatic encoding decisions during execution of the workflow.  This change will enable end users who may have access to MediaConvert and the solution S3 bucket, but not the internals of the solution, to develop new video processing workflows without modifying the underlying code for the solution.
 
-In this module, you will customize the VOD solution to use user-defined rules to automatically select which MediaConvert job template will be used as the encoding settings for a given input.  This change will enable end users who may have access to MediaConvert and the solution S3 bucket, but not the internals of the solution, to develop new video processing workflows without modifying the underlying code for the solution.
+The Video on Demand on AWS solution leverages AWS Step Functions, which breaks the workflow into individual steps, making it easier to customize or extend the architecture for your specific video-on-demand needs. For example, you can modify or replace the encoding steps to produce different content sets. You can also add steps to extend support for more complex workflows, including, for example, image processing for poster artwork or additional custom data to the metadata file that will then be stored in Amazon DynamoDB. 
 
-The Video on Demand solution already implements some hard-coded rules that we will replace with dynamic rules.  The existing rules checks the Mediainfo analysis results of the input video and decides on a job template that will avoid producing  _up-converted_ video outputs -  that is videos with a higher resolution than the input video.
+The solution already implements some hard-coded rules that we will replace with dynamic rules.  The existing rules checks the Mediainfo analysis results of the input video and decides on a job template that will avoid producing  _up-converted_ video outputs -  that is videos with a higher resolution than the input video.
 
 ## Changes to the Video on Demand solution end-user workflow
 
 When this module is complete the end user experience for using the Video on Demand solution will be as follows: 
 
-1. Create MediaConvert templates (e.g using the AWS Elemental MediaConvert console).  In our workshop, we will be using existing templates that were either generated from the lab toolkit or system templates provided by MediaConvert.  However, the new workflow supports any MediaConvert template.
+1. Create MediaConvert templates (e.g. using the AWS Elemental MediaConvert console).  In our workshop, we will be using existing templates that were either generated from the lab toolkit or system templates provided by MediaConvert.  However, the new workflow supports any MediaConvert template.
 
     ![create template](../images/mediaconvert-create-template.png)
 
-2. Create Mediainfo Rules using form input on a webpage.  Rules are stored in Dynamodb and can be retrieved by name via an API or AWS Lambda.
+2. Create Mediainfo Rules using form input on a webpage.  Rules are stored in DynamoDB and can be retrieved by name via an API or AWS Lambda.
 
     ![create mediainfo rules](../images/create-new-rule.png)
 
 3. Use input JSON metadata to trigger Video on Demand on AWS workflows. The metadata includes **_Rule Mappings_** to decide on which MediaConvert Template should be used for a specific input using JSON metadata.
   
-    ![metadata watchfolder](../images/metadata-watchfolder.png)
+    ![metadata watchfolder](../images/metadata-watchfolder-new.png)
 
 4. View the results of the Video on Demand on AWS jobs in the Workflow webpage.
 
@@ -43,21 +43,19 @@ The changes to the Video on Demand on AWS solution that are needed to support th
 
 The following Open Source packages are used to develop this customization.
 
-* [**jQuery QueryBuilder**](https://querybuilder.js.org/)  An open source javascript package that lets you build expressions using a web UI and translates the expression into different query engine formats such as SQL, Elastic Search, etc.  We will be translating the expressions to _business-rules_ JSON format.
+* [**jQuery QueryBuilder**](https://querybuilder.js.org/)  An open source JavaScript package that lets you build expressions using a web UI and translates the expression into different query engine formats such as SQL, Elastic Search, etc.  We will be translating the expressions to _business-rules_ JSON format.
 
 * [**business-rules**](https://github.com/venmo/business-rules) - an Open Source Python package that lets you execute rules against a set of configured variables.
 
 # Prerequisites
 
 1. Amazon Web Services account with root or Administrator permissions
-2. Video On Demand on AWS stack deployed in the same region you will complete the lab in.
+2. Video On Demand on AWS stack deployed in the same region you will complete the tutorial in.
 3. Google Chrome, Mozilla Firefox, or another current browser with JavaScript enabled.  Google Chrome is recommended.
 
 # Deploy the Lab Toolkit
 
-The lab toolkit is installed in your account using the workshop.yaml CloudFormation template.  This template runs several nested Cloudformation templates that create the S3, API Gateway, IAM and Lambda resources needed to complete the workshop.  We will examine the resources created and modify them as we proceed through the tutorial.  
-
-We will refer to this stack as "the **reinvent-rules** stack" throughout this module.
+The lab toolkit is installed in your account using the workshop.yaml CloudFormation template.  This template runs several nested templates that create the S3, API Gateway, IAM and Lambda resources needed to complete the workshop.  We will examine the resources created and modify them as we proceed through the tutorial.  
 
 ## Instructions  
 
@@ -68,20 +66,20 @@ Region | Launch
 ------|-----
 
 
-EU West 1 (Ireland) | [![Launch in eu-west-1](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/images/cloudformation-launch-stack-button.png)](https://console.aws.amazon.com/cloudformation/home?region=eu-west-1#/stacks/new?stackName=reinvent-rules&templateURL=https://s3.amazonaws.com/rodeolabz-eu-west-1/rules/3-rulesbasedencoding/v3/workshop.yaml)
+eu-west-1 (Ireland) | [![Launch in eu-west-1](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/images/cloudformation-launch-stack-button.png)](https://console.aws.amazon.com/cloudformation/home?region=eu-west-1#/stacks/new?stackName=reinvent-rules&templateURL=https://s3.amazonaws.com/rodeolabz-eu-west-1/rules/3-rulesbasedencoding/v3/workshop.yaml)
 
-US West 2 (Oregon) | [![Launch in us-west-2](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/images/cloudformation-launch-stack-button.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=reinvent-rules&templateURL=https://s3.amazonaws.com/rodeolabz-us-west-2/rules/3-rulesbasedencoding/v3/workshop.yaml)
+us-west-2 (Oregon) | [![Launch in us-west-2](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/images/cloudformation-launch-stack-button.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=reinvent-rules&templateURL=https://s3.amazonaws.com/rodeolabz-us-west-2/rules/3-rulesbasedencoding/v3/workshop.yaml)
 
-2. Name the stack or use the default name `reinvent-rules`.
-3. Fill in the **vodstack** parameter with the name of the stack you created for the Video on Demand solution.  
-4. Save the stack details page in a browser tab for future reference.
-5. During the installation of the Cloudformation templates you may be prompted to acknowledge the creation of IAM resources.  Click on the check-boxes next to each entry.  Finally,  click the **Create** or **Create Change set** and **Execute** buttons where applicable.
+2. Name the stack or use the default name `reinvent-rules`.  We will refer to the stack as **reinvent-rules** throughout this tutorial.
+3. Fill in the **vodstack** parameter with the name of the stack you created for the Video on Demand solution.  We will refer to this stack as the **reinvent-vod** stack throughout this tutorial.  
+4. **Save the stack details page in a browser tab for future reference.**
+5. During the installation of the CloudFormation templates you may be prompted to acknowledge the creation of IAM resources.  Click on the check-boxes next to each entry.  Finally,  click the **Create** or **Create Change set** and **Execute** buttons where applicable.
 
     ![chagesets](../images/cfn-changesets.png)
 
 ## Outputs
 
-The information about the resources created by this stack is in the **Outputs** tab.  For convienience, the outputs of the Video on Demand solution stack are also passed through and listed here as well.  
+The information about the resources created by this stack is in the **Outputs** tab.  For convenience, the outputs of the Video on Demand solution stack are also passed through and listed here as well.  
 
 **Save this page in a browser tab for future reference.  Or, copy and save the outputs to a file.**
 
@@ -96,13 +94,13 @@ The information about the resources created by this stack is in the **Outputs** 
 * **WorkflowSource** - Source Bucket for the Video on Demand on AWS solution	
 * **WorkflowDestination** -	Destination Bucket for the Video on Demand on AWS solution	
 * **WorkflowDynamoDBTable** - DynamoDB Table for the Video on Demand on AWS solution	
-* **RulesTableName** - Dynamodb Table for Rules API
+* **RulesTableName** - DynamoDB Table for Rules API
   
 ## Other resources we will work with
 
 We will also use the following resources created by the ruleapi nested stack:
 
-* **MediainfoRulesEngineProfiler** - a replacement lambda for the exisisting Video on Demand on AWS profiler lambda.
+* **MediainfoRulesEngineProfiler** - a replacement lambda for the existing Video on Demand on AWS profiler lambda.
 
 # Part 1: Change the Video on Demand on AWS S3 trigger to use input Metadata
 
@@ -120,13 +118,13 @@ The Video on Demand on AWS solution supports two types of S3 workflow triggers:
 
 Since we deployed the solution stack using the default, Video-Only Workflow trigger, we will need to change the S3 trigger setting to start the workflow using Metadata and Video.
  
-Once the Metadata and Video Workflow is enabled, any key-value pairs we add to the Metadata input file will be available to the Step Functions and Lambdas throughout the workflow. Each time the workflow is initiated, the solution creates a unique identifier (guid). All metadata including the input Metadata is stored in Dynamodb.  The unique identifier is used as the primary key in Amazon DynamoDB and the execution ID in AWS Step Functions. The unique identifier is passed to each step in the workflow, allowing information to be stored and retrieved in DynamoDB. 
+Once the Metadata and Video Workflow is enabled, any key-value pairs we add to the Metadata input file will be available to the Step Functions and Lambdas throughout the workflow. Each time the workflow is initiated, the solution creates a unique identifier (guid). All metadata including the input Metadata is stored in DynamoDB  The unique identifier is used as the primary key in Amazon DynamoDB and the execution ID in AWS Step Functions. The unique identifier is passed to each step in the workflow, allowing information to be stored and retrieved in DynamoDB 
 
-We will take advantage of Metadata to allow end-users to pass in addtional infomation about how to select templates from rules.
+We will take advantage of Metadata to allow end-users to pass in addtional information about how to select templates from rules.
 
 ## Instructions
 
-Use the steps below to change the **S3 ObjectCreate (All)** event trigger on the **Source** bucket to only triger if the object created in the bucket has a suffix of "json".  We don't need to make any other changes to the stack since the workflow will automatically handle extracting metadata from .json files.  We will test out passing metadata as part of this step to see how it works.
+Use the steps below to change the **S3 ObjectCreate (All)** event trigger on the **Source** bucket to only trigger if the object created in the bucket has a suffix of "json".  We don't need to make any other changes to the stack since the workflow will automatically handle extracting metadata from .json files.  We will test out passing metadata as part of this step to see how it works.
 
 1. Open the S3 console.
 2. Find the **Source** bucket created by the **reinvent-vod** stack and click on the link to open the detail page for the bucket. The bucket name will have a pattern like: `reinvent-vod-source-<unique-string>`.
@@ -143,10 +141,10 @@ Use the steps below to change the **S3 ObjectCreate (All)** event trigger on the
 
 ## Test the metadata trigger
 
-Now let's create a Video on Demand on AWS workflow using the Metadata trigger.  We'll add an extra, arbitrary,  key-value pair to pass a message to ourselves through the solution  to show we can add things here that are persisted in the Dynamodb data stored for the workflow guid.
+Now let's create a Video on Demand on AWS workflow using the Metadata trigger.  We'll add an extra, arbitrary,  key-value pair to pass a message to ourselves through the solution.  This shows that JSON attributes added in the input metadata are persisted in the DynamoDB data stored for the workflow.
 
 1. On your computer, create a file called `testMetadata.json`
-2. Copy the following JSON into the file and save.
+2. Copy the following JSON into the file and save.  
     ```json
     { 
       "srcVideo": "van_life.mp4", 
@@ -168,13 +166,13 @@ Now let's create a Video on Demand on AWS workflow using the Metadata trigger.  
 
 The VOD solution will pass along all the key value pairs in the JSON metadata used to trigger the workflow, even if they are not used by the current workflow.  This behavior will enable us to pass Mediainfo Rules when we trigger a new workflow.  The rules can be used later in code we add to the VOD solution step functions. 
 
-# Part 2: Configure a serverless application to create and manage Mediainfo Rules
+# Part 2: Configure the serverless application used to create rules
 
-The Lab Toolkit stack (`reinvent-rules`) created webpages backed by API Gateway, Lambda and Dynamodb that will be used to:
+The Lab Toolkit stack (`reinvent-rules`) created webpages backed by API Gateway, Lambda and DynamoDB that will be used to:
 1) drive the Mediainfo Rule creation 
 2) to visualize the workflow data created by the Video on Demand on AWS solution.  
 
-In this section of the workshop, we will confgure and test these resources to work with the Video on Demand on AWS solution stack you deployed earlier.
+In this section of the workshop, we will configure and test these resources to work with the Video on Demand on AWS solution stack you deployed earlier.
 
 ![Rules and Workflows](../images/ServerlessWebApp-new.png)
 
@@ -203,7 +201,7 @@ The **/vodonaws API Gateway API** has the following endpoints.
   
    ![hello output](../images/api-hello.png)
 
-3. Now add `/vodonaws` to the end of the url.  You should see a "Forbidden" message because the /vodonaws API is configured to require and API key which we will add in the next step. 
+3. Now add `/vodonaws` to the end of the URL.  You should see a "Forbidden" message because the /vodonaws API is configured to require and API key which we will add in the next step. 
 
     ![FIXME vodonaws list output](../images/api-vodonaws-forbidden.png)
 
@@ -216,7 +214,7 @@ The **/vodonaws API Gateway API** has the following endpoints.
 
 The Mediainfo Rules Web Application is secure after installation because it requires an API key to access any of the REST API endpoints, and the CloudFormation template doesn't configure API keys for the web application automatically. **By default, no access is possible until the following steps are performed.**
 
-#### First Run (Important)
+#### Instructions for First Run (Important)
 
 Each time the Mediainfo Rules web application is launched, the browser's locally stored cookies are checked for any previous API connection information. If a previous connection is found, it is used by the browser automatically on the next launch.
 
@@ -247,7 +245,7 @@ An API key was created in the reinvent-rules toolkit stack.
 
 The workflow webpage displays the output of the **GET /vodonaws** request.
 
-1. After entering the API endpoint you should see a list of Video on Demand on AWS workflow instances you ran in previous modules of this lab.
+1. After entering the API endpoint you should see a list of Video on Demand on AWS workflow instances you ran in previous modules of this tutorial.
 
     ![Workflow page screeenshot](../images/web-workflow.png)
 
@@ -261,9 +259,9 @@ The **Rules** webpage lists all the rules that have been created.  It displays t
 
 The **Create Rule** button on the **Rules** webpage lets you create or update a rule to be managed by the web application.  It uses the form input as parameters to the **POST /rules/{rule-name}** API request.
 
-**IMPORTANT: Make sure to create the exact rules listed in these steps.  We will used these later to test the end to end workflow.**
+**IMPORTANT: Make sure to create the exact rules listed in these steps.  We will use these later to test the end to end workflow.**
 
-1. Navigate to the **Rules** webpage by selecting the **Rules** button at the top of the **Workflow** webpage.  You can toggle back an forth between the pages using these buttons.  
+1. Navigate to the **Rules** webpage by selecting the **Rules** button at the top of the **Workflow** webpage.  You can toggle back and forth between the pages using these buttons.  
 2. Click on **Create rule**.
 3. Fill in the expression builder form to create a rule that tests if the container type of the input file is MXF and name it `Container_eq_MXF`.   
    
@@ -332,7 +330,7 @@ The MediainfoRulesEngineProfiler lambda is our replacement lambda for the profil
 
 The new lambda starts with the logic from the existing profiler lambda.  If no template is found using the ruleMappings, it will fall back to selecting a template using the existing method.
 
-The ruleMappings input is specified by the user in the JSON metadata file that is used to trigger the workflow.   It can be accessed by our lambda from the workflow information stored in Dynamodb. ruleMappings have following format:
+The ruleMappings input is specified by the user in the JSON metadata file that is used to trigger the workflow.   It can be accessed by our lambda from the workflow information stored in DynamoDB ruleMappings have following format:
 
 ```json
 "ruleMappings": [
@@ -356,8 +354,8 @@ Each ruleName is the key for the store business-rules JSON object that was creat
 
 The lambda Performs the following steps.  Steps that different from the existing profiler lambda are labelled with the keyword NEW:
 
-  * **NEW: Rules API Dynamodb table is mapped from the Lambda Enviornment**
-  * Get the latest workflow data for this guid from Dynamodb
+  * **NEW: Rules API DynamoDB table is mapped from the Lambda Enviornment**
+  * Get the latest workflow data for this guid from DynamoDB
   * Retrieve the Mediainfo analysis from the workflow data and set the outputs that come directly from Mediainfo.
   * **NEW: Retrieve the ruleMappings from the workflow data.**
   * **NEW: Decide on a MediaConvert job template** 
@@ -402,7 +400,7 @@ In this section we will replace the **profiler** lambda in **Process** step func
     ![replace profiler image](../images/step-replace-profiler-new.png)
 
 9.  Click **Save**
-10. Save this page in a broswer tab to use in the test step below.
+10. Save this page in a browser tab to use in the test step below.
 
 ## Test the end to end workflow
 
@@ -449,12 +447,13 @@ In this section we will replace the **profiler** lambda in **Process** step func
 
 To show that different templates are chosen for different inputs, replace the **srcVideo** value in the previous step with different input videos. Try:
 
-* `starlight_2160p59.m2ts` - no matching rule so the default, resolution based decison making will be used to select a template.
+* `starlight_2160p59.m2ts` - no matching rule so the default, resolution based decision making will be used to select a template.
 * `silksintrees_MPEG2.mxf` - the first ruleMapping is selected.
 
 ### Test the workflow with different rules
 
-Add another rule to using the **Rules** webpage.
+1. Add a rule to test for HEVC codec called `Codec_is_HEVC`.
+
 
 ### Add a new MediaConvert template and use it in a ruleMapping
 
@@ -462,7 +461,7 @@ Add another rule to using the **Rules** webpage.
 
 You have successfully completed the Rules Based Encoding workshop!  At this point, you should have a feel for how to modify the internals of the Video on Demand on AWS solution as well as  how the VOD solution might work as part of a larger application.
 
-What you accomplishd:
+What you accomplished:
 
 1. Changed the Video on Demand on AWS solution user interface from Video to Metadata inputs.
 2. Deployed and configured a serverless web application for creating named expressions, called **_Mediainfo Rules_**, that can be evaluated against facts from Mediainfo metadata for a video.
@@ -479,9 +478,9 @@ Delete the S3 bucket created by the `reinvent-rules` stack.
 2. Open the S3 console and search for the WebsiteBucket value.
 3. Click on the bucket icon and delete the bucket.
 
-Delete the `reinvent-rules` cloudformation stack.
+Delete the `reinvent-rules` CloudFormation stack.
 
-1. Open the cloudformation console.
+1. Open the CloudFormation console.
 2. Select the reinvent-rules stack radio button.
 3. Select **Delete stack** from the **Actions** drop down.
 
@@ -560,8 +559,8 @@ The resulting code is in **mediainfoRuleEngineProfiler**.  Let's do a walk-throu
 
   * **from profiler:** Input is {"guid":"guid-value"}
   * **from profiler:** Video on Demand on AWS workflow table is mapped from the Lambda Environment.
-  * **NEW CODE** Rules API Dynamodb table is mapped from the Lambda Enviornment
-  * **from profiler:** Get the latest workflow data for this guid from Dynamodb
+  * **NEW CODE** Rules API DynamoDB table is mapped from the Lambda Enviornment
+  * **from profiler:** Get the latest workflow data for this guid from DynamoDB
   * **from profiler:** Get mediainfo analysis results that were collected earlier in the workflow
   * **from profiler:** Set outputs that are based on mediainfo
   * **NEW CODE** Decide on a MediaConvert encoding template by running the mediainfo business-rules and selecting the first mapped template whose rule is true.  This implements IF-THEN-ELSE semantics.  The ELSE case is to use the solution default templates.  Test results for each rule executed are stored in the ruleMapping JSON elements of the event JSON object.
@@ -604,7 +603,7 @@ The resulting code is in **mediainfoRuleEngineProfiler**.  Let's do a walk-throu
 
 ## Test the new lambda
 
-1. To facilitate testing, the new lambda has a hard-coded test data you can use instead of getting the workflow datafrom dynamodb.  Take a moment to examine the test data, MEDIAINFO_BUSINESSRULES_PROFILER_TEST, located just above the **mediainfoRuleEngineProfiler** function in app.py.
+1. To facilitate testing, the new lambda has a hard-coded test data you can use instead of getting the workflow datafrom DynamoDB  Take a moment to examine the test data, MEDIAINFO_BUSINESSRULES_PROFILER_TEST, located just above the **mediainfoRuleEngineProfiler** function in app.py.
 2. Make sure the line of code for running the test is set to `True`
 
       ```python
@@ -620,7 +619,7 @@ The resulting code is in **mediainfoRuleEngineProfiler**.  Let's do a walk-throu
 4. Select **Configure test event** from the lambda toolbar.  
 5. In the dialog box, check **Create new test event**.
 6. Enter `dummyGuid` as the **Event name**.
-7. Paste the JSON below into the the code box.  This is just a fake guid to start the workflow.  We will be using the test dynamodb table data to test the lambda rather than looking up a workflow in dynamodb.
+7. Paste the JSON below into the the code box.  This is just a fake guid to start the workflow.  We will be using the test DynamoDB table data to test the lambda rather than looking up a workflow in DynamoDB.
    
    ```json
    {"guid":"notarealguid"}
@@ -719,7 +718,7 @@ Some desired features:
 
 * **add other types of analysis/rules** such as ffmpeg for black detection, silence detection, ffprobe. 
 
-* **Replace Python business-rules package with IOT Rules.**  There's always more than one way to do something!  I think we could use IOT Rules for this workflow by generating an SQL expression for each rule and creating a Dynamodb trigger rules with the following structure, name each track then write each rule as a column output of the select clause :
+* **Replace Python business-rules package with IOT Rules.**  There's always more than one way to do something!  I think we could use IOT Rules for this workflow by generating an SQL expression for each rule and creating a DynamoDB trigger rules with the following structure, name each track then write each rule as a column output of the select clause :
 
     ```
     SELECT 
@@ -732,4 +731,4 @@ Some desired features:
         mediainfo
     ```
 
-    The rule would insert the result of each expression into a dynamodb table.  A dynamodb trigger could be used to apply the rule mappings to select a template and continue the workflow.
+    The rule would insert the result of each expression into a DynamoDB table.  A DynamoDB trigger could be used to apply the rule mappings to select a template and continue the workflow.

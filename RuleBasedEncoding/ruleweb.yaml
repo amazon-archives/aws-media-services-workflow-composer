@@ -4,11 +4,17 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description:
   Rules Based Encoding Workshop - Dynamodb, S3 and Static website content 
   
+Parameters:
+
+  WebsiteBucketName:
+    Description: Name for website bucket.
+    Type: String
+
 Mappings:
   SourceCode:
     General:
-      CodeBucket: "rodeolabz-us-west-2"
-      KeyPrefix: "rules/3-rulesbasedencoding/v1"
+      CodeBucket: "rodeolabz"
+      KeyPrefix: "rules/3-rulesbasedencoding/v3"
 
 Resources:
 
@@ -28,9 +34,10 @@ Resources:
         WriteCapacityUnits: 3
       TableName: !Sub "${AWS::StackName}-RulesTable"
 
-  WebsiteBucket:
+  Site:
+    DeletionPolicy: Retain
     Properties:
-      #BucketName: !Ref BucketName
+  #    BucketName: !Ref WebsiteBucketName
       WebsiteConfiguration:
         IndexDocument: index.html
       CorsConfiguration:
@@ -43,25 +50,25 @@ Resources:
           MaxAge: '3600'
     Type: "AWS::S3::Bucket"
 
-  WebsiteBucketPolicy:
-    Properties:
-      Bucket: !Ref WebsiteBucket
-      PolicyDocument:
-        Version: 2012-10-17
-        Statement:
-          -
-            Effect: Allow
-            Principal: "*"
-            Action: s3:GetObject
-            Resource: !Sub "arn:aws:s3:::${WebsiteBucket}/*"
-    Type: "AWS::S3::BucketPolicy"
+  #WebsiteBucketPolicy:
+  #  Properties:
+      #Bucket: !Ref Site
+      #PolicyDocument:
+      #  Version: 2012-10-17
+      #  Statement:
+      #    -
+      #      Effect: Allow
+      #      Principal: "*"
+      #      Action: s3:GetObject
+      #      Resource: !Sub "arn:aws:s3:::${Site}/*"
+  #  Type: "AWS::S3::BucketPolicy"
 
   WebsiteContent:
     Properties:
       ServiceToken: !GetAtt CopyS3ObjectsFunction.Arn
-      SourceBucket: !FindInMap ["SourceCode", "General", "CodeBucket"]
+      SourceBucket: !Join ["-", [!FindInMap ["SourceCode", "General", "CodeBucket"], Ref: "AWS::Region"]]
       SourcePrefix: !Join ["/", [!FindInMap ["SourceCode", "General", "KeyPrefix"],  "website/"]] 
-      Bucket: !Ref WebsiteBucket
+      Bucket: !Ref Site
     Type: "Custom::S3Objects"
 
   S3CopyRole:
@@ -101,11 +108,11 @@ Resources:
                   - !Join 
                     - "" 
                     - - "arn:aws:s3:::"
-                      - !FindInMap ["SourceCode", "General", "CodeBucket"]
+                      - !Join ["-", [!FindInMap ["SourceCode", "General", "CodeBucket"], Ref: "AWS::Region"]]
                   - !Join 
                     - ""
                     - - "arn:aws:s3:::"
-                      - !FindInMap ["SourceCode", "General", "CodeBucket"]
+                      - !Join ["-", [!FindInMap ["SourceCode", "General", "CodeBucket"], Ref: "AWS::Region"]]
                       - "/"
                       - !FindInMap ["SourceCode", "General", "KeyPrefix"]
               -
@@ -121,8 +128,8 @@ Resources:
                   - "s3:DeleteObjectVersion"
                   - "s3:CopyObject"
                 Resource:
-                  - !Sub "arn:aws:s3:::${WebsiteBucket}"
-                  - !Sub "arn:aws:s3:::${WebsiteBucket}/*"
+                  - !Sub "arn:aws:s3:::${Site}"
+                  - !Sub "arn:aws:s3:::${Site}/*"
                   - "*"
 
   CopyS3ObjectsFunction:
@@ -174,7 +181,7 @@ Resources:
               dest_key = os.path.join(prefix, os.path.relpath(key, source_prefix))
               if not key.endswith('/'):
                 print 'copy {} to {}'.format(key, dest_key)
-                client.copy_object(CopySource={'Bucket': source_bucket, 'Key': key}, Bucket=bucket, Key = dest_key)
+                client.copy_object(CopySource={'Bucket': source_bucket, 'Key': key}, Bucket=bucket, Key = dest_key, ACL='public-read')
             return cfnresponse.SUCCESS
 
           def delete_objects(bucket, prefix):
@@ -191,6 +198,6 @@ Outputs:
   RulesTableName:
     Value: !Ref RulesTable    
   WebsiteURL:
-    Value: !GetAtt WebsiteBucket.WebsiteURL
+    Value: !GetAtt Site.WebsiteURL
   WebsiteBucket:
-    Value: !Ref WebsiteBucket
+    Value: !Ref Site
