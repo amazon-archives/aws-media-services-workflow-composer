@@ -29,8 +29,8 @@ Create flexible, intelligent file-based video workflows on AWS using dynamic rul
     ```json
     ruleMappings [
         {
-            'ruleName' : 'RuleBuilderRuleName',
-            'template' : 'MediaConvertJobTemplateName'
+            "ruleName" : "RuleBuilderRuleName",
+            "template" : "MediaConvertJobTemplateName"
         }
     ]
     ```
