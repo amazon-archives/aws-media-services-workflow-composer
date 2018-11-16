@@ -1,4 +1,4 @@
-# Media Services VOD Workflow Builder
+# Media Services VOD Workflow Composer
 
 ## Overview
 
