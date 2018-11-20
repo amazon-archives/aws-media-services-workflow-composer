@@ -3,3 +3,4 @@ sam.*
 deploy/dist
 **dist
 **.pyc
+deploy/build-s3-dist-local.sh

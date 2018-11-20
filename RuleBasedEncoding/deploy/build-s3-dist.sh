@@ -1,8 +1,8 @@
 !/bin/bash
-regions='us-west-2 eu-west-1'
-bucket='rodeolabz' # no / at the end
-prefix='rules/3-rulesbasedencoding/v3'		#no / at the beginning or end
-aws_profile='default-tm'
+regions='REGION'
+bucket='BUCKET' # no / at the end
+prefix='PATH_WITHIN_BUCKET'		#no / at the beginning or end
+aws_profile='PROFILE'
 
 #[ -e dist ] && rm -r dist
 #mkdir -p dist
