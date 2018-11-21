@@ -50,11 +50,11 @@ The following Open Source packages are used to develop this customization.
 # Prerequisites
 
 1. Amazon Web Services account with root or Administrator permissions
-2. Video On Demand on AWS stack deployed in the same region you will complete the tutorial in.  The lab uses the name `reinvent-vod` for this stack.  The following CloudFormation stack parameters need to be set during deployment:
+2. [Video On Demand on AWS](https://aws.amazon.com/answers/media-entertainment/video-on-demand-on-aws/) stack deployed in the same region you will complete the tutorial in.  The lab uses the name `reinvent-vod` for this stack.  The following CloudFormation stack parameters need to be set during deployment:
     * FrameCapture = true
     * WorkflowTrigger = VideoFile (we will change the trigger to Metadata as part of the workshop)
 4. Google Chrome, Mozilla Firefox, or another current browser with JavaScript enabled.  Google Chrome is recommended.
-5. (OPTIONAL) If you are not completing this as part of an in-person workshop, you will need to copy the workshop test videos into the Source bucket for your Video On Demand on AWS Stack.  This can be done from the AWS S3 commandline using the following commands.  Replace VODONAWS-SOURCE-OUTPUT with the name of the Source output from the `reinvent-vod` stack:
+5. (OPTIONAL) If you are not completing this as part of an in-person workshop, you will need to copy the workshop test videos into the Source bucket for your Video On Demand on AWS Stack.  This can be done from the AWS S3 commandline using the following commands.  Replace YOUR-REINVENT-VOD-SOURCE-BUCKETNAME with the name of the Source output from the `reinvent-vod` stack:
    ```
    aws s3 cp s3://rodeolabz-eu-west-1/rules/videos/van_life.mp4 s3://YOUR-REINVENT-VOD-SOURCE-BUCKETNAME
    aws s3 cp s3://rodeolabz-eu-west-1/rules/videos/starlight_2160p59.m2ts s3://YOUR-REINVENT-VOD-SOURCE-BUCKETNAME
@@ -149,7 +149,7 @@ Use the steps below to change the **S3 ObjectCreate (All)** event trigger on the
 
 ## Test the metadata trigger
 
-Now let's create a Video on Demand on AWS workflow using the Metadata trigger.  We'll add an extra, arbitrary,  key-value pair to pass a message to ourselves through the solution.  This shows that JSON attributes added in the input metadata are persisted in the DynamoDB data stored for the workflow.
+Now let's create a Video on Demand on AWS workflow using the Metadata trigger.  We'll add an extra, arbitrary,  key-value pair to pass a message to ourselves through the solution.  This will help us prove to ourselves that JSON attributes added in the input metadata are persisted in the DynamoDB data stored for the workflow.
 
 1. On your computer, create a file called `testMetadata.json`
 2. Copy the following JSON into the file and save.  
@@ -448,8 +448,25 @@ In this section we will replace the **profiler** lambda in **Process** step func
     ![Success](../images/success.png)
 
 11. You will notice that the result of the rule execution is listed in the details of the workflow instance.
-    
-## More things to try
+
+# Conclusion
+
+You have successfully completed the Rules Based Encoding workshop!  At this point, you should have a feel for how to modify the internals of the Video on Demand on AWS solution as well as  how the VOD solution might work as part of a larger application.  Adding rules to an automated encoding workflow is a common and useful tool for video delivery.
+
+What you accomplished:
+
+1. Changed the Video on Demand on AWS solution user interface from Video to Metadata inputs.
+2. Deployed and configured a serverless web application for creating named expressions, called **_Mediainfo Rules_**, that can be evaluated against facts from Mediainfo metadata for a video.
+3. Deployed and inspected a **_MediainfoRulesEngineProfiler_** lambda function that uses Mediainfo metadata for a specific video and evaluates a list of Mediainfo Rules to select a MediaConvert job template to use to process the video.
+4. Changed the Video on Demand on AWS solution to use the MediainfoRulesEngineProfiler lambda in place of the existing logic to select a job template.
+   
+Thank you for completing the workshop!
+
+Next steps:
+* To cleanup the resources created for this workshop see the [Cleanup](#Cleanup) section below.
+* Additional suggestions for working with this code sample and the workshop videos are available in the [More things to try](#More-things-to-try) section.
+
+# More things to try
 
 1.  Test the workshop workflow with different inputs
 
@@ -476,19 +493,6 @@ In this section we will replace the **profiler** lambda in **Process** step func
 
 
 3. Add a new MediaConvert template and use it in a ruleMapping.  You can find details on how to create custom templates in the [MediaConvert documentation](https://docs.aws.amazon.com/mediaconvert/latest/ug/working-with-job-templates.html).
-
-# Conclusion
-
-You have successfully completed the Rules Based Encoding workshop!  At this point, you should have a feel for how to modify the internals of the Video on Demand on AWS solution as well as  how the VOD solution might work as part of a larger application.
-
-What you accomplished:
-
-1. Changed the Video on Demand on AWS solution user interface from Video to Metadata inputs.
-2. Deployed and configured a serverless web application for creating named expressions, called **_Mediainfo Rules_**, that can be evaluated against facts from Mediainfo metadata for a video.
-3. Deployed and inspected a **_MediainfoRulesEngineProfiler_** lambda function that uses Mediainfo metadata for a specific video and evaluates a list of Mediainfo Rules to select a MediaConvert job template to use to process the video.
-4. Changed the Video on Demand on AWS solution to use the MediainfoRulesEngineProfiler lambda in place of the existing logic to select a job template.
-   
-Thank you for completing the workshop!
 
 # Cleanup
 
@@ -708,7 +712,7 @@ The resulting code is in **mediainfoRuleEngineProfiler**.  Let's do a walk-throu
 13. Scroll to the top of the page and copy the ARN for the lambda.
 
 
-# Appendix: Next steps
+# Next steps
 
 Feel free to enter a pull request if you want to add to this project!
 
