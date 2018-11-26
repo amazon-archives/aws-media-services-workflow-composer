@@ -50,15 +50,22 @@ The following Open Source packages are used to develop this customization.
 # Prerequisites
 
 1. Amazon Web Services account with root or Administrator permissions
-2. [Video On Demand on AWS](https://aws.amazon.com/answers/media-entertainment/video-on-demand-on-aws/) stack deployed in the same region you will complete the tutorial in.  The lab uses the name `reinvent-vod` for this stack.  The following CloudFormation stack parameters need to be set during deployment:
+2. Workshop version of the [Video On Demand on AWS](https://aws.amazon.com/answers/media-entertainment/video-on-demand-on-aws/) solution deployed in the same region you will complete the tutorial in.  The lab uses the name `reinvent-vod` for this stack.  The following CloudFormation stack parameters need to be set during deployment:
     * FrameCapture = true
     * WorkflowTrigger = VideoFile (we will change the trigger to Metadata as part of the workshop)
-4. Google Chrome, Mozilla Firefox, or another current browser with JavaScript enabled.  Google Chrome is recommended.
-5. (OPTIONAL) If you are not completing this as part of an in-person workshop, you will need to copy the workshop test videos into the Source bucket for your Video On Demand on AWS Stack.  This can be done from the AWS S3 commandline using the following commands.  Replace YOUR-REINVENT-VOD-SOURCE-BUCKETNAME with the name of the Source output from the `reinvent-vod` stack:
+   
+   Click the button to launch the lab version of the Video on Demand on AWS stack.
+   
+   eu-west-1 (Ireland) | [![Launch in eu-west-1](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/images/cloudformation-launch-stack-button.png)](https://console.aws.amazon.com/cloudformation/home?region=eu-west-1#/stacks/new?stackName=reinvent-vod&templateURL=https://s3-eu-west-1.amazonaws.com/decepticons-eu-west-1/video-on-demand-on-aws/reinvent/video-on-demand-on-aws.yaml)
+   
+3. Google Chrome, Mozilla Firefox, or another current browser with JavaScript enabled.  Google Chrome is recommended.
+4. (OPTIONAL) If you are not completing this as part of an in-person workshop, you will need to copy the workshop test videos into the Source bucket for your Video On Demand on AWS Stack.  This can be done from the AWS S3 commandline using the following commands.  Replace YOUR-REINVENT-VOD-SOURCE-BUCKETNAME with the name of the Source output from the `reinvent-vod` stack:
    ```
    aws s3 cp s3://rodeolabz-eu-west-1/rules/videos/van_life.mp4 s3://YOUR-REINVENT-VOD-SOURCE-BUCKETNAME
+   
    aws s3 cp s3://rodeolabz-eu-west-1/rules/videos/starlight_2160p59.m2ts s3://YOUR-REINVENT-VOD-SOURCE-BUCKETNAME
-   s3://rodeolabz-eu-west-1/rules/videos/silksintrees_MPEG2.mxf s3://YOUR-REINVENT-VOD-SOURCE-BUCKETNAME
+   
+   aws s3 cps3://rodeolabz-eu-west-1/rules/videos/silksintrees_MPEG2.mxf s3://YOUR-REINVENT-VOD-SOURCE-BUCKETNAME
    ```
 
 # Deploy the Lab Toolkit
@@ -67,7 +74,7 @@ The lab toolkit is installed in your account using the workshop.yaml CloudFormat
 
 ## Instructions  
 
-1. Click **Launch Stack** to launch the template in your account in the region of your choice.  The stacks should take a few minutes to deploy.
+1. Click **Launch Stack** to launch the template in your account in the same region you deployed the `reinvent-vod` stack.  The stacks should take a few minutes to deploy.
 
 
 Region | Launch
@@ -78,10 +85,10 @@ eu-west-1 (Ireland) | [![Launch in eu-west-1](http://docs.aws.amazon.com/AWSClou
 
 us-west-2 (Oregon) | [![Launch in us-west-2](http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/images/cloudformation-launch-stack-button.png)](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=reinvent-rules&templateURL=https://s3.amazonaws.com/rodeolabz-us-west-2/rules/3-rulesbasedencoding/v3/workshop.yaml)
 
-2. Name the stack or use the default name `reinvent-rules`.  We will refer to the stack as **reinvent-rules** throughout this tutorial.
-3. Fill in the **vodstack** parameter with the name of the stack you created for the Video on Demand solution.  We will refer to this stack as the **reinvent-vod** stack throughout this tutorial.  
-4. **Save the stack details page in a browser tab for future reference.**
-5. During the installation of the CloudFormation templates you may be prompted to acknowledge the creation of IAM resources.  Click on the check-boxes next to each entry.  Finally,  click the **Create** or **Create Change set** and **Execute** buttons where applicable.
+1. Name the stack or use the default name `reinvent-rules`.  We will refer to the stack as **reinvent-rules** throughout this tutorial.
+2. Fill in the **vodstack** parameter with the name of the stack you created for the Video on Demand solution.  We will refer to this stack as the **reinvent-vod** stack throughout this tutorial.  
+3. **Save the stack details page in a browser tab for future reference.**
+4. During the installation of the CloudFormation templates you may be prompted to acknowledge the creation of IAM resources.  Click on the check-boxes next to each entry.  Finally,  click the **Create** or **Create Change set** and **Execute** buttons where applicable.
 
     ![chagesets](../images/cfn-changesets.png)
 
@@ -90,8 +97,6 @@ us-west-2 (Oregon) | [![Launch in us-west-2](http://docs.aws.amazon.com/AWSCloud
 The information about the resources created by this stack is in the **Outputs** tab.  For convenience, the outputs of the Video on Demand solution stack are also passed through and listed here as well.  
 
 **Save this page in a browser tab for future reference.  Or, copy and save the outputs to a file.**
-
-![outputs](../images/cfn-rules-outputs.png)
 
 * **APIHandlerArn** - ARN of the Lambda function that serves as the back-end for the /rule and /vodonaws APIs
 * **APIHandlerName** - Name of the Lambda function that serves as the back-end for the /rule and /vodonaws APIs
@@ -291,7 +296,7 @@ We have one more change to the VOD solution so it can use the Mediainfo Rule Map
 
 ![changes](../images/vodonaws-changes-new.png)
 
-To understand this change we will do a quick overview of the existing **reinvent-vod-process** lambda function and the **reinvent-rules-MediainfoRulesEngineProfiler** lambda function.  More detailed code walkthoughs and testing can be found in [Appendix 1: Code Walktroughs](#Appendix-1:-Code-Walktroughs) below.
+To understand this change we will do a quick overview of the existing **reinvent-vod-process** lambda function and the **reinvent-rules-MediainfoRulesEngineProfiler** lambda function.  More detailed code walkthoughs and testing can be found in [Appendix: Code Walktroughs](#Appendix:-Code-Walktroughs) below.
 
 ## Locate the Process Step Function and the Profiler Lambda function
 
@@ -462,7 +467,7 @@ What you accomplished:
    
 Thank you for completing the workshop!
 
-Next steps:
+**Next steps:**
 * To cleanup the resources created for this workshop see the [Cleanup](#Cleanup) section below.
 * Additional suggestions for working with this code sample and the workshop videos are available in the [More things to try](#More-things-to-try) section.
 
