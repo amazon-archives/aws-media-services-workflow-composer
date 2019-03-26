@@ -183,7 +183,7 @@ MEDIAINFO_BUSINESSRULES_PROFILER_TEST = {
 }
 
 '''
- * @description set an endcoding profile based on the sorurce mediaInfo metadata). 
+ * @description set an encoding profile based on the source mediaInfo metadata). 
  * define the height/width for framecapture. define the encoding
  * job template to be used based on the profile (passing in the the event.jobTemplate
  * will overide the workflow defaults)
